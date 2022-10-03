@@ -7,3 +7,4 @@ mysql-connector
 boto3
 email-validator
 passlib
+requests
