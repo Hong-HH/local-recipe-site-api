@@ -8,3 +8,4 @@ boto3
 email-validator
 passlib
 requests
+google-auth

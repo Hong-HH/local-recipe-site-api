@@ -11,8 +11,17 @@ from email_validator import validate_email, EmailNotValidError
 
 from utils import check_password, hash_password
 
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import  get_jwt, get_jwt_header
 from config import Config
+
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
+
+
+# 같은 이름의 라이브러리 임포트할 때 팁
+# >>> from foo import bar as first_bar
+# >>> from baz import bar as second_bar
 
 
 
@@ -87,6 +96,8 @@ class UserLoginResource(Resource) :
             print("token_result     :")
             print(token_result)
 
+
+            #  dict 를 dict.get('key') 로 엑섹스 함
             access_token = token_result.get("access_token")
 
             header = {"Authorization" : "Bearer " + access_token}
@@ -118,5 +129,38 @@ class UserLoginResource(Resource) :
 
             login_result = requests.post(url).json()
             print(login_result)
+
+            id_token = login_result['id_token']
+            
+            #  Google ID 토큰의 유효성을 검사
+            try:
+                # Specify the CLIENT_ID of the app that accesses the backend:
+                idinfo = id_token.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+                # Or, if multiple clients access the backend server:
+                # idinfo = id_token.verify_oauth2_token(token, requests.Request())
+                # if idinfo['aud'] not in [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]:
+                #     raise ValueError('Could not verify audience.')
+
+                # ID token is valid. Get the user's Google Account ID from the decoded token.
+                userid = idinfo['sub']
+                print(type(idinfo))
+                print(idinfo)
+
+
+            except ValueError:
+                # Invalid token
+                print("Invalid token")
+                pass    
+
+
+
+            # tokeninfo 엔드포인트 호출
+            # 요청이 제한되거나 간헐적인 오류가 발생할 수 있으므로 프로덕션 코드에서 사용하기에 적합하지 않습니다.
+            token_info_url = 'ttps://oauth2.googleapis.com/tokeninfo?id_token=' + id_token
+            token_info_result = requests.get(token_info_url).json
+            print (token_info_result)
+
+
+
 
             return {'status' : 200, 'message' : login_result}
