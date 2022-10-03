@@ -18,6 +18,8 @@ from config import Config
 
 class UserLoginResource(Resource) :
     def post(self) : 
+        # 협의를 봐서 분기문 추가하기
+
         login_type = request.args.get('login_type')
 
         if login_type == "naver" :
@@ -62,6 +64,10 @@ class UserLoginResource(Resource) :
     def get(self) : 
         # 구글과 네이버를 가르는 분기문
         state = request.args.get('state')
+
+        print(request.args.to_dict())
+
+
         if state  :
             # flask 프론트에서 값을 받아올 때
             
@@ -96,3 +102,21 @@ class UserLoginResource(Resource) :
             print("state is None")
             print("so this is google login")
 
+            code = request.args.get('code')
+            client_id = Config.GOOGLE_LOGIN_CLIENT_ID
+            client_secret = Config.GOOGLE_LOGIN_CLIENT_SECRET
+            redirect_uri =  Config.LOCAL_URL + "v1/user/login"
+            
+            url = Config.GOOGLE_TOKEN_UTL
+            url = url + "grant_type=authorization_code"
+            url = url + "&client_id="+ client_id +"&client_secret="+ client_secret +"&code=" + code +"&redirect_uri=" + redirect_uri
+
+            # header = {'Content-type': 'application/x-www-form-urlencoded'}
+
+            print(url)
+            # , headers=header
+
+            login_result = requests.post(url).json()
+            print(login_result)
+
+            return {'status' : 200, 'message' : login_result}

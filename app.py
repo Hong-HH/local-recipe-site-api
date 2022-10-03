@@ -93,10 +93,19 @@ def google_login():
     #  code 획득을 위한 임시 프론트
 
 
-    client_id = ''
-    redirect_uri = ''
+    client_id = Config.GOOGLE_LOGIN_CLIENT_ID
+    redirect_uri =  Config.LOCAL_URL + "v1/user/login"
+    
+    # 값이 부족하다면 &scope=profile 로 값을 변경해보자. 현재는 &scope=openid
 
-    url = Config.GOOGLE_LOGIN_URL
+    url = Config.GOOGLE_LOGIN_CODE
+    url = url + "response_type=code" + "&access_type=offline&" + "&scope=https://www.googleapis.com/auth/userinfo.profile"
+    url = url + "&client_id=" + client_id + "&redirect_uri=" + redirect_uri
+
+    print("url      :")
+    print(url)
+
+    return redirect(url)
 
 
 
