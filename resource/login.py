@@ -60,32 +60,39 @@ class UserLoginResource(Resource) :
 
 
     def get(self) : 
-        # flask 프론트에서 값을 받아올 때
+        # 구글과 네이버를 가르는 분기문
         state = request.args.get('state')
-        code = request.args.get('code')
+        if state  :
+            # flask 프론트에서 값을 받아올 때
+            
+            code = request.args.get('code')
 
 
-        client_id = Config.NAVER_LOGIN_CLIENT_ID
-        client_secret = Config.NAVER_LOGIN_CLIENT_SECRET
+            client_id = Config.NAVER_LOGIN_CLIENT_ID
+            client_secret = Config.NAVER_LOGIN_CLIENT_SECRET
 
-        redirect_uri = Config.LOCAL_URL + "v1/user/login"
+            redirect_uri = Config.LOCAL_URL + "v1/user/login"
 
-        url = Config.NAVER_TOKEN_URL
-        url = url + "client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
+            url = Config.NAVER_TOKEN_URL
+            url = url + "client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
 
 
-        token_result = requests.get(url).json()
-        print("token_result     :")
-        print(token_result)
+            token_result = requests.get(url).json()
+            print("token_result     :")
+            print(token_result)
 
-        access_token = token_result.get("access_token")
+            access_token = token_result.get("access_token")
 
-        header = {"Authorization" : "Bearer " + access_token}
+            header = {"Authorization" : "Bearer " + access_token}
 
-        profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
+            profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
 
-        print("profile_result     :")
-        print(profile_result)
+            print("profile_result     :")
+            print(profile_result)
 
-        return {'status' : 200, 'message' : {'token_result' : token_result, 'profile_result' : profile_result }}
+            return {'status' : 200, 'message' : {'token_result' : token_result, 'profile_result' : profile_result }}
+
+        elif state is None :
+            print("state is None")
+            print("so this is google login")
 

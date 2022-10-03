@@ -88,6 +88,17 @@ def naver_login():
 
 
 
+@app.route("/google" )
+def google_login():
+    #  code 획득을 위한 임시 프론트
+
+
+    client_id = ''
+    redirect_uri = ''
+
+    url = Config.GOOGLE_LOGIN_URL
+
+
 
 
 
