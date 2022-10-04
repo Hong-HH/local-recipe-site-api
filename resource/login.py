@@ -14,7 +14,7 @@ from utils import check_password, hash_password
 from flask_jwt_extended import  get_jwt, get_jwt_header
 from config import Config
 
-from google.oauth2 import id_token
+from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 
@@ -131,11 +131,13 @@ class UserLoginResource(Resource) :
             print(login_result)
 
             id_token = login_result['id_token']
+
+            # 안되면 Bearer 붙여서 하기
             
             #  Google ID 토큰의 유효성을 검사
             try:
                 # Specify the CLIENT_ID of the app that accesses the backend:
-                idinfo = id_token.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+                idinfo = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
                 # Or, if multiple clients access the backend server:
                 # idinfo = id_token.verify_oauth2_token(token, requests.Request())
                 # if idinfo['aud'] not in [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]:
@@ -156,7 +158,7 @@ class UserLoginResource(Resource) :
 
             # tokeninfo 엔드포인트 호출
             # 요청이 제한되거나 간헐적인 오류가 발생할 수 있으므로 프로덕션 코드에서 사용하기에 적합하지 않습니다.
-            token_info_url = 'ttps://oauth2.googleapis.com/tokeninfo?id_token=' + id_token
+            token_info_url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + id_token
             token_info_result = requests.get(token_info_url).json
             print (token_info_result)
 
