@@ -26,6 +26,7 @@ from google.auth.transport import requests as google_requests
 
 
 class UserLoginResource(Resource) :
+    # 클라이언트(web user) 에게서 받아 (로그인 결과) 리턴해주는 api
     def post(self) : 
         # 협의를 봐서 분기문 추가하기
 
@@ -69,6 +70,10 @@ class UserLoginResource(Resource) :
 
 
 
+    # 유기적인 서버와 클라이언트 테스트를 위해 
+    # 임시로 app.py에서 코드 값을 받을 수 있는 path 추가함. 
+    # code 를 얻는 path : "/naver", "/google"   
+    # redirect(url) 로 각 플랫폼의 로그인 승인 페이지로 이동 --> redirect url 로 설정한 페이지 (v1/user/login) 로 이동됨
 
     def get(self) : 
         # 구글과 네이버를 가르는 분기문
@@ -102,6 +107,7 @@ class UserLoginResource(Resource) :
 
             header = {"Authorization" : "Bearer " + access_token}
 
+            #  프로필 요청
             profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
 
             print("profile_result     :")
@@ -135,6 +141,8 @@ class UserLoginResource(Resource) :
             # 안되면 Bearer 붙여서 하기
             
             #  Google ID 토큰의 유효성을 검사
+            #  공식문서 : https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
+
             try:
                 # Specify the CLIENT_ID of the app that accesses the backend:
                 idinfo = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
@@ -152,6 +160,11 @@ class UserLoginResource(Resource) :
             except ValueError:
                 # Invalid token
                 print("Invalid token")
+
+                # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
+
+                # 만약 access_token 이 만료되었다면 재발급
+                
                 pass    
 
 
