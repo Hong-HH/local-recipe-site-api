@@ -31,6 +31,7 @@ jwt = JWTManager(app)
     
 #     return result
 
+
 # catch 하고싶은 에러 
 CUSTOM_ERRORS = {
     'RevokedTokenError': {

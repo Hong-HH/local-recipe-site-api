@@ -65,6 +65,53 @@ class UserLoginResource(Resource) :
             return {'status' : 200, 'message' : {'token_result' : token_result, 'profile_result' : profile_result }}
 
 
+        if  login_type == "google" :
+            # 1. 클라이언트로부터 정보를 받아온다.
+            # id 토큰 받기
+            id_token = request.args.get('id_token')
+
+            # 2. id 토큰 유효성 검사
+
+
+            try:
+                # Specify the CLIENT_ID of the app that accesses the backend:
+                idinfo = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+                # Or, if multiple clients access the backend server:
+                # idinfo = id_token.verify_oauth2_token(token, requests.Request())
+                # if idinfo['aud'] not in [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]:
+                #     raise ValueError('Could not verify audience.')
+
+                # ID token is valid. Get the user's Google Account ID from the decoded token.
+                userid = idinfo['sub']
+                print(type(idinfo))
+                print(idinfo)
+                
+
+            except ValueError:
+                # Invalid token
+                print("Invalid token")
+
+                # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
+
+                # 만약 access_token 이 만료되었다면 재발급
+                
+                pass    
+
+            # 3. id 토큰 디코드 해서 유저정보 얻기
+            # tokeninfo 엔드포인트 호출
+            # 요청이 제한되거나 간헐적인 오류가 발생할 수 있으므로 프로덕션 코드에서 사용하기에 적합하지 않습니다.
+            token_info_url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + id_token
+            token_info_result = requests.get(token_info_url).json
+            print (token_info_result)
+
+            return {'status' : 200, 'message' : token_info_result}
+
+
+
+
+
+
+
 
 
 
