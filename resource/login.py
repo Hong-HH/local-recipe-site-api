@@ -24,15 +24,15 @@ from google.auth.transport import requests as google_requests
 # >>> from baz import bar as second_bar
 
 
-
+# 클라이언트(web user) 에게서 받아 (로그인 결과) 리턴해주는 api
 class UserLoginResource(Resource) :
-    # 클라이언트(web user) 에게서 받아 (로그인 결과) 리턴해주는 api
+    
     def post(self) : 
-        # 협의를 봐서 분기문 추가하기
+        # 파라미터에서 외부 로그인이 무엇인지 가져오기
+        external_type = request.args.get('external_type')
 
-        login_type = request.args.get('login_type')
-
-        if login_type == "naver" :
+        # 네이버로 로그인을 하였을  때
+        if external_type == "naver" :
             # 1. 클라이언트로부터 정보를 받아온다.
             # request 의 body 에서 code 와 state 값 받기
             data = request.get_json()
@@ -62,59 +62,170 @@ class UserLoginResource(Resource) :
             print("profile_result     :")
             print(profile_result)
 
+
+            # 보내줄때 쿠키에 refresh 토큰
+
+            # 헤더에 access 토큰 
+
             return {'status' : 200, 'message' : {'token_result' : token_result, 'profile_result' : profile_result }}
 
 
-        if  login_type == "google" :
+        # 구글로 로그인을 하였을 때
+        elif  external_type == "google" :
             # 1. 클라이언트로부터 정보를 받아온다.
-            # id 토큰 받기
-            id_token = request.args.get('id_token')
+            # 헤더에 있는 id 토큰 얻기
+            # werkzeug.datastructures.EnvironHeaders 에 대한 설명 아래 링크 참고
+            # https://tedboy.github.io/flask/generated/generated/werkzeug.EnvironHeaders.html
+            get_header = request.headers
+            #  request.headers.get('Token') 해보자!
+            print("get_header    :")
+            print(get_header)
+            print(type(get_header))
+            id_token = get_header['Token']
+            print(type(id_token))
+            print(id_token)
 
             # 2. id 토큰 유효성 검사
-
-
+            #  공식문서 : https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
             try:
                 # Specify the CLIENT_ID of the app that accesses the backend:
-                idinfo = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
-                # Or, if multiple clients access the backend server:
-                # idinfo = id_token.verify_oauth2_token(token, requests.Request())
-                # if idinfo['aud'] not in [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]:
-                #     raise ValueError('Could not verify audience.')
+                id_info = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
 
-                # ID token is valid. Get the user's Google Account ID from the decoded token.
-                userid = idinfo['sub']
-                print(type(idinfo))
-                print(idinfo)
-                
+                # 확인용 print 문
+                print("id info 프린트")
+                print(id_info)
 
             except ValueError:
                 # Invalid token
                 print("Invalid token")
 
-                # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
-
                 # 만약 access_token 이 만료되었다면 재발급
+
+
+                # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
+                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
+
+
+            # 3-1. DB에 연결
+            try : 
+                connection = get_connection()
+
+            except Error as e:
+                print('Error', e)
+
+                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
+            
+            # 3-2. 회원가입 여부 확인
+            try :
+                print("회원가입 확인중")
+                query = '''SELECT  email, nickname, profile_img, profile_desc, created_at 
+                            FROM user
+                            where external_type = "google"
+                            and external_id = %s;'''
+                                            
+                param = (id_info["sub"], )
                 
-                pass    
+                cursor = connection.cursor(dictionary = True)
 
-            # 3. id 토큰 디코드 해서 유저정보 얻기
-            # tokeninfo 엔드포인트 호출
-            # 요청이 제한되거나 간헐적인 오류가 발생할 수 있으므로 프로덕션 코드에서 사용하기에 적합하지 않습니다.
-            token_info_url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + id_token
-            token_info_result = requests.get(token_info_url).json
-            print (token_info_result)
+                cursor.execute(query, param)
 
-            return {'status' : 200, 'message' : token_info_result}
+                # select 문은 아래 내용이 필요하다.
+                record_list = cursor.fetchall()
+                print("record_list    :   ")
+                print(record_list)
+
+                # 3-3. 회원가입이 되어있다면 로그인 결과로 보내준다.
+                if len( record_list ) == 1 :
+                    print("회원가입 되어있음")
+                    ### 중요. 파이썬의 시간은, JSON으로 보내기 위해서
+                    ### 문자열로 바꿔준다.
+                    i = 0
+                    for record in record_list:
+                        record_list[i]['created_at'] = record['created_at'].isoformat()
+                        i = i + 1
+                    return {'status' : 200, 'message' : record_list}
+
+                else :    
+                    # 4-1. 회원가입이 되어있지 않다면 db에 유저 정보를 등록해준다.
+                    try :
+                        print("회원 등록 중")
+                        query = '''insert into user
+                                (external_type ,external_id, email, nickname, profile_img)
+                                values
+                                ("google",%s,%s, %s, %s);'''
+                                                    
+                        param = (id_info["sub"], id_info["email"],id_info["name"],id_info["picture"])
+                        
+                        # 커넥션으로부터 커서를 가져온다
+                        cursor = connection.cursor()
+                        # 쿼리문을 커서에 넣어서 실행한다.
+                        cursor.execute(query, param)
+
+                        # 커넥션을 커밋한다. => 디비에 영구적으로 반영하라는 뜻.
+                        connection.commit()
+
+                        # select 문은 아래 내용이 필요하다.
+                        record_list = cursor.fetchall()
+                        print("record_list    :   ")
+                        print(record_list)
+
+                        # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
+                    except Error as e :
+                        print('Error while connecting to MySQL', e)
+                        return {'status' : 500, 'message' : str(e)} 
 
 
+                    # 4-2. 로그인 결과 보내주기.
+                    print("회원가입 성공")
+                    try :
+                        print("db 정보 확인 중")
+                        query = '''SELECT  email, nickname, profile_img, profile_desc, created_at 
+                                    FROM user
+                                    where external_type = "google"
+                                    and external_id = %s;'''
+                                                    
+                        param = (id_info["sub"], )
+                        
+                        cursor = connection.cursor(dictionary = True)
+
+                        cursor.execute(query, param)
+
+                        # select 문은 아래 내용이 필요하다.
+                        record_list = cursor.fetchall()
+                        print("record_list    :   ")
+                        print(record_list)
+
+                        # 저장된 정보를 로그인 결과로 보내준다.
+                        if len( record_list ) == 1 :
+                            print("회원가입 되어있음")
+                            ### 중요. 파이썬의 시간은, JSON으로 보내기 위해서
+                            ### 문자열로 바꿔준다.
+                            i = 0
+                            for record in record_list:
+                                record_list[i]['created_at'] = record['created_at'].isoformat()
+                                i = i + 1
+                            return {'status' : 200, 'message' : record_list}
+
+                    # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
+                    except Error as e :
+                        print('Error while connecting to MySQL', e)
+                        return {'status' : 500, 'message' : str(e)} 
 
 
+                    
+            # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
+            except Error as e :
+                print('Error while connecting to MySQL', e)
+                return {'status' : 500, 'message' : str(e)} 
 
-
-
-
-
-
+            # finally는 필수는 아니다.
+            finally :
+                if connection.is_connected():
+                    cursor.close()
+                    connection.close()
+                    print('MySQL connection is closed')
+                else :
+                    print('MySQL connection failed connect')
 
 
     # 유기적인 서버와 클라이언트 테스트를 위해 
@@ -184,6 +295,10 @@ class UserLoginResource(Resource) :
             print(login_result)
 
             id_token = login_result['id_token']
+            print("id token 의 type")
+            print(type(id_token))
+            print("id token         :")
+            print(id_token)
 
             # 안되면 Bearer 붙여서 하기
             
@@ -213,14 +328,6 @@ class UserLoginResource(Resource) :
                 # 만약 access_token 이 만료되었다면 재발급
                 
                 pass    
-
-
-
-            # tokeninfo 엔드포인트 호출
-            # 요청이 제한되거나 간헐적인 오류가 발생할 수 있으므로 프로덕션 코드에서 사용하기에 적합하지 않습니다.
-            token_info_url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + id_token
-            token_info_result = requests.get(token_info_url).json
-            print (token_info_result)
 
 
 

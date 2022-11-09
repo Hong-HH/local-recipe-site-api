@@ -8,7 +8,7 @@ mysql_connection.py
 
 category_upload.py
 
-
+sql_doc/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
