@@ -15,7 +15,7 @@ from google.auth.transport import requests as google_requests
 
 
 # 회원가입 여부 확인
-def check_user(connection, external_type,external_id) :
+def check_user(cursor, external_type,external_id) :
 
     try :
         print("회원가입 확인중")
@@ -26,8 +26,6 @@ def check_user(connection, external_type,external_id) :
                                     
         param = (external_type,external_id )
         
-        cursor = connection.cursor(dictionary = True)
-
         cursor.execute(query, param)
 
         # select 문은 아래 내용이 필요하다.
@@ -53,6 +51,78 @@ def check_user(connection, external_type,external_id) :
     except Error as e :
         print('Error while connecting to MySQL', e)
         return {'status' : 500, 'message' : str(e)} 
+
+    # finally :
+    #     cursor.close()
+
+
+
+
+def get_naver_token (code, state) :
+    # 사용등록을 해놓은 네이버 client 계정을 사용한다.
+    client_id = Config.NAVER_LOGIN_CLIENT_ID
+    client_secret = Config.NAVER_LOGIN_CLIENT_SECRET
+
+    # 토큰을 얻는 naver api 사용
+    redirect_uri = Config.LOCAL_URL + "v1/user/login"
+
+    url = Config.NAVER_TOKEN_URL
+    url = url + "grant_type=authorization_code&"
+    url = url + "client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
+
+
+    token_result = requests.get(url).json()
+    print("token_result     :")
+    print(token_result)
+
+    return {"access_token" : token_result["access_token"], "refresh_token" : token_result["refresh_token"]}
+
+
+
+
+def get_naver_profile(access_token) :
+
+    header = {"Authorization" : "Bearer " + access_token}
+
+    profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
+
+    print(profile_result)
+    
+    result_code =  profile_result["resultcode"]
+
+    if result_code == "00" :
+        profile_info = profile_result["response"]
+
+        return {"result_code" : result_code, "profile_info" : profile_info}
+
+    # {'resultcode': '024', 'message': 'Authentication failed (인증 실패하였습니다.)'}
+
+    elif result_code == "024" :
+        return {"result_code" : result_code, "message" : "Authentication failed (인증 실패하였습니다.)"}
+
+    return {"result_code" : result_code, "message" : "문제 발생"}
+
+
+# 네이버 access_token 만료시
+
+def refresh_naver_token (code, state) :
+    # 사용등록을 해놓은 네이버 client 계정을 사용한다.
+    client_id = Config.NAVER_LOGIN_CLIENT_ID
+    client_secret = Config.NAVER_LOGIN_CLIENT_SECRET
+
+    # 토큰을 얻는 naver api 사용
+    redirect_uri = Config.LOCAL_URL + "v1/user/login"
+
+    url = Config.NAVER_TOKEN_URL
+    url = url + "grant_type=authorization_code&"
+    url = url + "client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
+
+
+
+
+
+
+# todo id_token 이 만료되었다면 재발급 함수
 
 
 
