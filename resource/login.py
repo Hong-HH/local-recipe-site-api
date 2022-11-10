@@ -12,6 +12,7 @@ from config import Config
 from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
+from functions import check_user
 
 
 # 같은 이름의 라이브러리 임포트할 때 팁
@@ -58,6 +59,16 @@ class UserLoginResource(Resource) :
 
             print("profile_info     :")
             print(profile_info)
+
+            # 3-1. DB에 연결
+            try : 
+                connection = get_connection()
+
+            except Error as e:
+                print('Error', e)
+
+                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
+            
 
             # 3. 유저 정보를 바탕으로 회원가입을 했는지 db에서 확인
             try :
@@ -251,7 +262,7 @@ class UserLoginResource(Resource) :
                 print('Error', e)
 
                 return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
-            
+                       
             # 3-2. 회원가입 여부 확인
             try :
                 print("회원가입 확인중")
