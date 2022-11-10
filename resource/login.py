@@ -53,6 +53,7 @@ class UserLoginResource(Resource) :
 
                     else :
                         print("access token 발급에 문제 발생")
+                        return {"status" : 404}
                     
                     # db에 회원정보 저장
                     try :
@@ -91,7 +92,16 @@ class UserLoginResource(Resource) :
                         # todo access token 만료이므로 재발급
                         print(profile_result["message"] )
                         print("access token 인증에 문제 발생")
-                        return {'status' : 400 , 'message' :profile_result["message"]} 
+                        refresh_token = request.cookies.get('userID')
+                        print(refresh_token)
+                        access_token = refresh_naver_token(refresh_token)
+                        profile_result = get_naver_profile(access_token)
+                        if profile_result["result_code"] == "00" :
+                            profile_info = profile_result["profile_info"]
+                        else :
+                            print("access token 발급에 문제 발생")
+                            return {"status" : 404}
+                        
 
 
                 # 2-3. 바디에 code, access_token 이 없다면 필요한 값이 전달되지 않은것.
@@ -251,16 +261,14 @@ class UserLoginResource(Resource) :
 
             code = request.args.get('code')
 
-            # # 테스트를 위해 code, state 값은 반환하는 리턴문
-            return {"code" : code, "state": state}
+            # 테스트를 위해 code, state 값은 반환하는 리턴문
+            # return {"code" : code, "state": state}
 
-            # state = request.args.get('state')
-
-            # # 함수를 사용하여 access_token, refresh_token를 받는다.
-            # token_result = get_naver_token(code, state)
-            # access_token = token_result["access_token"]
-            # refresh_token = token_result["refresh_token"]
-            # return {'status' : 200, 'access_token' : access_token}
+            # 함수를 사용하여 access_token, refresh_token를 받는다.
+            token_result = get_naver_token(code, state)
+            access_token = token_result["access_token"]
+            refresh_token = token_result["refresh_token"]
+            return {'status' : 200, 'access_token' : access_token, "refresh_token" : refresh_token}
 
 
         elif state is None :
