@@ -67,8 +67,8 @@ def get_naver_token (code, state) :
     redirect_uri = Config.LOCAL_URL + "v1/user/login"
 
     url = Config.NAVER_TOKEN_URL
-    url = url + "grant_type=authorization_code&"
-    url = url + "client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
+    url = url + "grant_type=authorization_code"
+    url = url + "&client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
 
 
     token_result = requests.get(url).json()
@@ -105,19 +105,24 @@ def get_naver_profile(access_token) :
 
 # 네이버 access_token 만료시
 
-def refresh_naver_token (code, state) :
+def refresh_naver_token (refresh_token) :
     # 사용등록을 해놓은 네이버 client 계정을 사용한다.
     client_id = Config.NAVER_LOGIN_CLIENT_ID
     client_secret = Config.NAVER_LOGIN_CLIENT_SECRET
 
     # 토큰을 얻는 naver api 사용
-    redirect_uri = Config.LOCAL_URL + "v1/user/login"
-
     url = Config.NAVER_TOKEN_URL
-    url = url + "grant_type=authorization_code&"
-    url = url + "client_id=" + client_id + "&client_secret=" + client_secret + "&redirect_uri=" + redirect_uri + "&code=" + code + "&state=" + state
+    url = url + "grant_type=refresh_token"
+    url = url + "&client_id=" + client_id + "&client_secret=" + client_secret + "&refresh_token=" + refresh_token
 
+    token_result = requests.get(url).json()
+    
+    print("token_result     :")
+    print(token_result)
 
+    access_token = token_result["access_token"]
+
+    return access_token
 
 
 
