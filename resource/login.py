@@ -12,7 +12,7 @@ from config import Config
 from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
-from functions import check_user, get_naver_token, get_naver_profile, refresh_naver_token
+from functions_for_users import check_user, get_naver_token, get_naver_profile, refresh_naver_token
 
 
 # 같은 이름의 라이브러리 임포트할 때 팁
