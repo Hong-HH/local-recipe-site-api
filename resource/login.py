@@ -93,8 +93,7 @@ class UserLoginResource(Resource) :
                     # 보내줄때 쿠키에 refresh 토큰
                     resp.set_cookie('refresh_token', refresh_token )
                     return resp
-                                      
-
+    
                 else :
                     return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} 
 
