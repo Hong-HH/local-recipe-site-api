@@ -236,15 +236,6 @@ class UserRegisterResource(Resource) :
 
 
 
-
-
-
-
-
-
-
-
-
 # 3-2. db에 유저가 없을시 회원가입 결과 리턴
 # if check_result["status"] == 200 :
 #     if "code" in data :
