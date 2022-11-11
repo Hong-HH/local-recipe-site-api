@@ -52,14 +52,6 @@ class UserLoginResource(Resource) :
                     access_token = token_result["access_token"]
                     refresh_token = token_result["refresh_token"]
 
-                    profile_result = get_naver_profile(access_token)
-                    if profile_result["result_code"] == "00" :
-                        profile_info = profile_result["profile_info"]
-
-                    else :
-                        print("access token 발급에 문제 발생")
-                        return {"status" : 404}
-
                     
                 # 3. access_token 유효성 검사 및 유저 정보 겟
                 profile_result = get_naver_profile(access_token)
