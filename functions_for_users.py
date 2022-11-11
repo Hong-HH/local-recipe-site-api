@@ -42,7 +42,7 @@ def check_user(cursor, external_type,external_id) :
             for record in record_list:
                 record_list[i]['created_at'] = record['created_at'].isoformat()
                 i = i + 1
-            return {'status' : 200, 'message' : record_list}
+            return {'status' : 200, 'message' : "회원입니다.","userInfo":record_list}
 
         else :
             return {'status' : 400, 'message' : "회원이 아닙니다."}

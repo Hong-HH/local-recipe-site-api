@@ -24,7 +24,7 @@ from functions_for_users import check_user, get_naver_token, get_naver_profile, 
 class UserLoginResource(Resource) :
     
     def post(self) : 
-        # 파라미터에서 외부 로그인이 무엇인지 가져오기
+        # 파라미터에서 external_type 가져오기
         external_type = request.args.get('external_type')
 
         # 네이버로 로그인을 하였을  때
@@ -35,10 +35,15 @@ class UserLoginResource(Resource) :
             try : 
                 connection = get_connection()
                 cursor = connection.cursor(dictionary = True)
-                # 2-1. code가 있다면 회원가입
-                if "code" in data :
-                    # request 의 body 에서 code 와 state 값 받기
-                    print("회원가입 절차 시작")
+                # 2-1. access_token 있으면 변수에 저장
+                if "access_token" in data :
+                    access_token = data["access_token"]
+                    refresh_token = request.cookies.get('refresh_token')
+                    
+                # 2-1. access_token 없으면 access_token 발급
+                else :
+                    # data 에서 code 와 state 값 받기
+                    print("access_token 발급 시작")
                     code = data["code"]
                     state = data["state"]
 
@@ -54,88 +59,39 @@ class UserLoginResource(Resource) :
                     else :
                         print("access token 발급에 문제 발생")
                         return {"status" : 404}
+
                     
-                    # db에 회원정보 저장
-                    try :
-                        print("회원 등록 중")
-                        query = '''insert into user
-                                (external_type ,external_id, email, nickname, profile_img)
-                                values
-                                ("naver",%s,%s, %s, %s);'''
-                                                    
-                        param = (profile_info["id"], profile_info["email"],profile_info["name"],profile_info["profile_image"])
-                        
-                        # 쿼리문을 커서에 넣어서 실행한다.
-                        cursor.execute(query, param)
+                # 3. access_token 유효성 검사 및 유저 정보 겟
+                profile_result = get_naver_profile(access_token)
+                if profile_result["result_code"] == "00" :
+                    profile_info = profile_result["profile_info"]
+                else :
+                    # todo access token 만료이므로 재발급
+                    print("access token 이 유효하지 않음")
+                    print(profile_result["message"] )
 
-                        # 커넥션을 커밋한다. => 디비에 영구적으로 반영하라는 뜻.
-                        connection.commit()
-
-                        # 회원가입 결과 보내주기.
-                        print("회원가입 성공")
-                        
-                        # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
-                    except Error as e :
-                        print('Error while connecting to MySQL', e)
-                        return {'status' : 500, 'message' : str(e)} 
-
-
-
-                # 2-2. access_token 이 있다면 프로필을 불러와 유효성 검사 및 id 확인
-                elif  "access_token" in data :
-
-                    access_token = data["access_token"]
+                    access_token = refresh_naver_token(refresh_token)
                     profile_result = get_naver_profile(access_token)
                     if profile_result["result_code"] == "00" :
                         profile_info = profile_result["profile_info"]
                     else :
-                        # todo access token 만료이므로 재발급
-                        print(profile_result["message"] )
-                        print("access token 인증에 문제 발생")
-                        refresh_token = request.cookies.get('userID')
-                        print(refresh_token)
-                        access_token = refresh_naver_token(refresh_token)
-                        profile_result = get_naver_profile(access_token)
-                        if profile_result["result_code"] == "00" :
-                            profile_info = profile_result["profile_info"]
-                        else :
-                            print("access token 발급에 문제 발생")
-                            return {"status" : 404}
-                        
+                        print("access token 발급에 문제 발생")
+                        return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
 
-
-                # 2-3. 바디에 code, access_token 이 없다면 필요한 값이 전달되지 않은것.
-                else :
-                    return {'status' : 400 , 'message' : '필수조건을 만족하지 못했습니다.'} 
-
-                # 3-1. 회원가입 되었는지 확인
+                # db에 등록된 유저인지 체크
                 check_result = check_user(cursor, "naver", profile_info["id"])
 
-                # 3-2. db에 유저가 있을시 로그인 결과 리턴
                 if check_result["status"] == 200 :
-                    if "code" in data :
-                        resp = Response(
-                                response=json.dumps({
-                                                        "status" : 200,
-                                                        "message": "success" ,
-                                                        "userInfo" : check_result["message"],
-                                                        "token" : access_token
-                                                    }),
-                                        status=200,
-                                        mimetype="application/json"
-                                        )
+                    # db에 유저가 있음 --> 로그인 결과 리턴
+                    return {'status' : 200 , 'message' : "success", 'userInfo': check_result["userInfo"]} 
+                elif check_result["status"] == 400 :
+                    # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
+                    userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
+                    return {'status' : 400 , 'message' : "go_register", "userInfo" : userInfo, "access_token" : access_token} 
 
-                        # 헤더에 access 토큰 이 아니라 바디
-                        # resp.headers['access_Token'] = access_token
-                        # 보내줄때 쿠키에 refresh 토큰
-                        resp.set_cookie('refresh_token', refresh_token )
-                        return resp
-                    else :
-                        return { "status" : 200, "message": "success" , "userInfo" : check_result["message"], "token" : access_token }
                 else :
-                    return {'status' : 500 , 'message' : '회원정보를 찾을 수 없습니다.'} 
+                    return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} 
 
-                
             except Error as e:
                 print('Error', e)
 
@@ -189,45 +145,12 @@ class UserLoginResource(Resource) :
                 # 3-3. db에 유저가 있을시 로그인 결과 리턴
                 if check_result["status"] == 200 :
                     
-                    return {'status' : 200 , 'message' : "success", "userInfo": check_result["message"]} 
+                    return {'status' : 200 , 'message' : "success", "userInfo": check_result["userInfo"]} 
 
                 else :    
-                    # 4-1. 회원가입이 되어있지 않다면 db에 유저 정보를 등록해준다.
-                    try :
-                        print("회원 등록 중")
-                        query = '''insert into user
-                                (external_type ,external_id, email, nickname, profile_img)
-                                values
-                                ("google",%s,%s, %s, %s);'''
-                                                    
-                        param = (id_info["sub"], id_info["email"],id_info["name"],id_info["picture"])
-                        
-                        # 쿼리문을 커서에 넣어서 실행한다.
-                        cursor.execute(query, param)
-
-                        # 커넥션을 커밋한다. => 디비에 영구적으로 반영하라는 뜻.
-                        connection.commit()
-
-                        # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
-                    except Error as e :
-                        print('Error while connecting to MySQL', e)
-                        return {'status' : 500, 'message' : str(e)} 
-
-
-                    # 4-2. 회원가입 결과 보내주기.
-                    print("회원가입 성공")
-
-                    #  4-3. 회원가입 되어있는지 다시 확인
-                    check_result = check_user(cursor, "google", id_info["sub"])
-
-                    # db에 유저가 있을시로그인 결과 리턴
-                    if check_result["status"] == 200 :
-                        
-                        return {'status' : 200 , 'message' : "register success", "userInfo": check_result["message"]} 
-
-                    else :
-                        return {'status' : 500 , 'message' : "회원정보가 확인되지 않았습니다."} 
-
+                    # 4-1. 회원가입이 되어있지 않다면 회원가입이 필요하다는 메세지를 리턴해준다.
+                    userInfo = {"email":id_info["email"] , "nickname": id_info["name"], "profile_img":id_info["picture"] }
+                    return {'status' : 400 , 'message' : "go_register", "userInfo" : userInfo } 
 
 
             except Error as e:
