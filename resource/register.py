@@ -119,11 +119,13 @@ class UserRegisterResource(Resource) :
                     else :
                         # data에 access_token 이 없다면 정보를 수정할 수 있게
                         # external user info 반환
-                        #  "refresh_token" : refresh_token
+
+                        userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
+                        
                         resp = Response(
                         response=json.dumps({'status' : 200 , 
                                             'message' : "success", 
-                                            "userInfo": check_result["userInfo"], 
+                                            "userInfo": userInfo, 
                                             "access_token": access_token}),
                                 status=200,
                                 mimetype="application/json"

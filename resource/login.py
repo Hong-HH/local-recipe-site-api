@@ -78,8 +78,22 @@ class UserLoginResource(Resource) :
                     return {'status' : 200 , 'message' : "success", 'userInfo': check_result["userInfo"]} 
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
+
                     userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
-                    return {'status' : 400 , 'message' : "go_register", "userInfo" : userInfo, "access_token" : access_token} 
+
+                    resp = Response(
+                        response=json.dumps({'status' : 200 , 
+                                            'message' : "success", 
+                                            "userInfo": userInfo, 
+                                            "access_token": access_token}),
+                                status=200,
+                                mimetype="application/json"
+                                )
+
+                    # 보내줄때 쿠키에 refresh 토큰
+                    resp.set_cookie('refresh_token', refresh_token )
+                    return resp
+                                      
 
                 else :
                     return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} 
