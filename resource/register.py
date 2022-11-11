@@ -108,7 +108,7 @@ class UserRegisterResource(Resource) :
                         # 회원가입 되어있는지 다시 확인
                         check_result = check_user(cursor, "naver", profile_info["id"])
 
-                        # db에 유저가 있을시로그인 결과 리턴
+                        # db에 유저가 있을시 회원가입 결과 리턴
                         if check_result["status"] == 200 :
                             return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} 
 
