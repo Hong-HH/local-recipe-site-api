@@ -119,8 +119,21 @@ class UserRegisterResource(Resource) :
                     else :
                         # data에 access_token 이 없다면 정보를 수정할 수 있게
                         # external user info 반환
-                        return {'status' : 200 , 'message' : "success", "userInfo": check_result["userInfo"]}
+                        #  "refresh_token" : refresh_token
+                        resp = Response(
+                        response=json.dumps({'status' : 200 , 
+                                            'message' : "success", 
+                                            "userInfo": check_result["userInfo"], 
+                                            "access_token": access_token}),
+                                status=200,
+                                mimetype="application/json"
+                                )
 
+                        # 헤더에 access 토큰 이 아니라 바디
+                        # resp.headers['access_Token'] = access_token
+                        # 보내줄때 쿠키에 refresh 토큰
+                        resp.set_cookie('refresh_token', refresh_token )
+                        return resp
 
             except Error as e:
                 print('Error', e)
