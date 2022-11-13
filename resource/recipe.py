@@ -47,23 +47,41 @@ class RescipeListSeperateResource(Resource) :
         list_type = params["list_type"]
 
 
+
         try :       
             # 1. db 접속
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = recipe_list_map[list_type]
+            query = recipe_list_map(list_type)
             
             cursor.execute(query)
             # select 문은 아래 내용이 필요하다.
             # 커서로 부터 실행한 결과 전부를 받아와라.
             record_list = cursor.fetchall()
-            print(record_list)
-
+            # print(record_list)
+            print(type(record_list))
+            return_list = []
             i = 0
             for record in record_list:
-                record_list[i]['created_at'] = record['created_at'].isoformat()
+                # record_list[i]['created_at'] = record['created_at'].isoformat()
+                recipe = {"recipe_id": record['recipe_id'],
+                            "like": record['likes_cnt'],
+                            "view": record['views'],
+                            "userInfo":[record['profile_img'], record['nickname']],
+                            "public": record['public'],
+                            "src": record['header_img'],
+                            "title":record['header_title'],
+                            "created_at": record['created_at'].isoformat()}
+                return_list.append(recipe)
                 i = i +1
+
+            print(record_list)
+            print(type(return_list))    
+            print(return_list)
+            print(type(return_list[0]["created_at"]))    
+            
+            
 
 
 
@@ -81,4 +99,4 @@ class RescipeListSeperateResource(Resource) :
                 print('MySQL connection is closed')
             else :
                 print('connection does not exist')
-        return {'status' : 200, 'list' : record_list }, HTTPStatus.OK
+        return {'status' : 200, 'list' : return_list }, HTTPStatus.OK
