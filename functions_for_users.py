@@ -42,7 +42,7 @@ def check_user(cursor, external_type,external_id) :
             for record in record_list:
                 record_list[i]['created_at'] = record['created_at'].isoformat()
                 i = i + 1
-            return {'status' : 200, 'message' : "회원입니다.","userInfo":record_list}
+            return {'status' : 200, 'message' : "회원입니다.","userInfo":record_list[0]}
 
         else :
             return {'status' : 400, 'message' : "회원이 아닙니다."}
@@ -133,6 +133,13 @@ def refresh_naver_token (refresh_token) :
 
 
 
+# recipe list request type 에 대한 query 문 매칭
+
+def recipe_list_map () :
+
+    
+
+    return True
 
 
 
