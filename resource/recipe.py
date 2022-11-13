@@ -59,8 +59,6 @@ class RescipeListSeperateResource(Resource) :
             # select 문은 아래 내용이 필요하다.
             # 커서로 부터 실행한 결과 전부를 받아와라.
             record_list = cursor.fetchall()
-            # print(record_list)
-            print(type(record_list))
             return_list = []
             i = 0
             for record in record_list:
@@ -75,15 +73,6 @@ class RescipeListSeperateResource(Resource) :
                             "created_at": record['created_at'].isoformat()}
                 return_list.append(recipe)
                 i = i +1
-
-            print(record_list)
-            print(type(return_list))    
-            print(return_list)
-            print(type(return_list[0]["created_at"]))    
-            
-            
-
-
 
         # 3. 클라이언트에 보낸다. 
         except Error as e :
