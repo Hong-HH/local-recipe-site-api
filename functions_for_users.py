@@ -133,14 +133,4 @@ def refresh_naver_token (refresh_token) :
 
 
 
-# recipe list request type 에 대한 query 문 매칭
-
-def recipe_list_map () :
-
-    
-
-    return True
-
-
-
 
