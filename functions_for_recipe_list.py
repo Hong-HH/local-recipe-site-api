@@ -1,9 +1,8 @@
 
 # recipe list request type 에 대한 query 문 매칭
 
-def recipe_list_map () :
+def recipe_list_map (list_type) :
 
-    list_type = "best"
 
     list_type_map = {
                     "best" :'''select r.id as recipe_id ,l_b_v.likes_cnt , l_b_v.views , r.user_id, u.nickname, u.profile_img , r.public, r.header_img, r.header_title, r.created_at

@@ -10,6 +10,8 @@ from urllib import parse
 
 from config import Config
 from resource.login import UserLoginResource
+from resource.register import UserRegisterResource
+from resource.recipe import RescipeListSeperateResource
 
 
 app = Flask(__name__)
@@ -48,9 +50,12 @@ api = Api(app, errors=CUSTOM_ERRORS)
 
 # resources 와 연결
 
-# api.add_resource(UserRegisterResource, '/v1/user/register')
+api.add_resource(UserRegisterResource, '/v1/user/register')
 api.add_resource(UserLoginResource, '/v1/user/login')
 # api.add_resource(LogoutResource, '/v1/user/logout')
+api.add_resource(RescipeListSeperateResource, '/v1/recipe')
+
+
 
 
 

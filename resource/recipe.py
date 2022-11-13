@@ -13,16 +13,18 @@ from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 
-list_type_map = {
-    "best" :'''select * from memo
-                        where user_id=%s
-                        order by date desc
-                        limit''',
-    "best_not_enough" : '''select * from memo
-                        where user_id=%s
-                        order by date desc
-                        limit'''
-}
+from functions_for_recipe_list import recipe_list_map
+
+# list_type_map = {
+#     "best" :'''select * from memo
+#                         where user_id=%s
+#                         order by date desc
+#                         limit''',
+#     "best_not_enough" : '''select * from memo
+#                         where user_id=%s
+#                         order by date desc
+#                         limit'''
+# }
 
 
 
@@ -50,28 +52,18 @@ class RescipeListSeperateResource(Resource) :
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = list_type_map[list_type]
+            query = recipe_list_map[list_type]
             
-            cursor.execute(query, record)
+            cursor.execute(query)
             # select 문은 아래 내용이 필요하다.
             # 커서로 부터 실행한 결과 전부를 받아와라.
             record_list = cursor.fetchall()
             print(record_list)
 
-            ### 중요. 파이썬의 시간은, JSON으로 보내기 위해서
-            ### 문자열로 바꿔준다.
-            # if record_list is None:
-            #     print("저장된 메모 없음")
-            #     memo_lenth = 0
-
-            # else :
             i = 0
             for record in record_list:
                 record_list[i]['created_at'] = record['created_at'].isoformat()
-                record_list[i]['updated_at'] = record['updated_at'].isoformat()
-                record_list[i]['date'] = record['date'].isoformat()
                 i = i +1
-            memo_lenth = len(record_list)
 
 
 
@@ -79,7 +71,7 @@ class RescipeListSeperateResource(Resource) :
         except Error as e :
             # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
             print('Error while connecting to MySQL', e)
-            return {'error' : 500, 'count' : 0, 'list' : []}, HTTPStatus.INTERNAL_SERVER_ERROR
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
         # finally 는 try에서 에러가 나든 안나든, 무조건 실행하라는 뜻.
         finally : 
             print('finally')
@@ -89,4 +81,4 @@ class RescipeListSeperateResource(Resource) :
                 print('MySQL connection is closed')
             else :
                 print('connection does not exist')
-        return {'error' : 200, 'count' : memo_lenth, 'list' : record_list }, HTTPStatus.OK
+        return {'status' : 200, 'list' : record_list }, HTTPStatus.OK
