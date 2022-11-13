@@ -75,15 +75,15 @@ class UserLoginResource(Resource) :
 
                 if check_result["status"] == 200 :
                     # db에 유저가 있음 --> 로그인 결과 리턴
-                    return {'status' : 200 , 'message' : "success", 'userInfo': check_result["userInfo"]} 
+                    return {'status' : 200 , 'message' : "success", 'userInfo': [check_result["userInfo"]["nickname"], check_result["userInfo"]["email"]]} 
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
 
-                    userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
+                    userInfo = [profile_info["name"], profile_info["email"]]
 
                     resp = Response(
                         response=json.dumps({'status' : 200 , 
-                                            'message' : "success", 
+                                            'message' : "go_register", 
                                             "userInfo": userInfo, 
                                             "access_token": access_token}),
                                 status=200,
@@ -150,11 +150,11 @@ class UserLoginResource(Resource) :
                 # 3-3. db에 유저가 있을시 로그인 결과 리턴
                 if check_result["status"] == 200 :
                     
-                    return {'status' : 200 , 'message' : "success", "userInfo": check_result["userInfo"]} 
+                    return {'status' : 200 , 'message' : "success", "userInfo": [check_result["userInfo"]["nickname"], check_result["userInfo"]["email"]]} 
 
                 else :    
                     # 4-1. 회원가입이 되어있지 않다면 회원가입이 필요하다는 메세지를 리턴해준다.
-                    userInfo = {"email":id_info["email"] , "nickname": id_info["name"], "profile_img":id_info["picture"] }
+                    userInfo = [id_info["name"], id_info["email"] ]
                     return {'status' : 400 , 'message' : "go_register", "userInfo" : userInfo } 
 
 

@@ -37,15 +37,15 @@ class UserRegisterResource(Resource) :
                 access_token = data["access_token"]
                 refresh_token = request.cookies.get('refresh_token')
 
-            else :
-                # 엑세스 토큰이 없다면 엑세스 토큰 발급
-                code = data["code"]
-                state = data["state"]
+            # else :
+            #     # 엑세스 토큰이 없다면 엑세스 토큰 발급
+            #     code = data["code"]
+            #     state = data["state"]
 
-                # 함수를 사용하여 access_token, refresh_token를 받는다.
-                token_result = get_naver_token(code, state)
-                access_token = token_result["access_token"]
-                refresh_token = token_result["refresh_token"]
+            #     # 함수를 사용하여 access_token, refresh_token를 받는다.
+            #     token_result = get_naver_token(code, state)
+            #     access_token = token_result["access_token"]
+            #     refresh_token = token_result["refresh_token"]
 
 
             # 엑세스 토큰 유효성 검사 겸 유저 정보 겟
@@ -116,26 +116,26 @@ class UserRegisterResource(Resource) :
                             return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} 
 
 
-                    else :
-                        # data에 access_token 이 없다면 정보를 수정할 수 있게
-                        # external user info 반환
+                    # else :
+                    #     # data에 access_token 이 없다면 정보를 수정할 수 있게
+                    #     # external user info 반환
 
-                        userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
+                    #     userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
                         
-                        resp = Response(
-                        response=json.dumps({'status' : 200 , 
-                                            'message' : "success", 
-                                            "userInfo": userInfo, 
-                                            "access_token": access_token}),
-                                status=200,
-                                mimetype="application/json"
-                                )
+                    #     resp = Response(
+                    #     response=json.dumps({'status' : 200 , 
+                    #                         'message' : "success", 
+                    #                         "userInfo": userInfo, 
+                    #                         "access_token": access_token}),
+                    #             status=200,
+                    #             mimetype="application/json"
+                    #             )
 
-                        # 헤더에 access 토큰 이 아니라 바디
-                        # resp.headers['access_Token'] = access_token
-                        # 보내줄때 쿠키에 refresh 토큰
-                        resp.set_cookie('refresh_token', refresh_token )
-                        return resp
+                    #     # 헤더에 access 토큰 이 아니라 바디
+                    #     # resp.headers['access_Token'] = access_token
+                    #     # 보내줄때 쿠키에 refresh 토큰
+                    #     resp.set_cookie('refresh_token', refresh_token )
+                    #     return resp
 
             except Error as e:
                 print('Error', e)
@@ -228,12 +228,12 @@ class UserRegisterResource(Resource) :
                             return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} 
 
 
-                    else : 
-                        # 이 경우 회원가입을 진행하기 전 정보를 수정할 수 있게 
-                        # external site에서 가져온 회원정보 보내주기
-                        userInfo = {"email":id_info["email"] , "nickname": id_info["name"], "profile_img":id_info["picture"] }
+                    # else : 
+                    #     # 이 경우 회원가입을 진행하기 전 정보를 수정할 수 있게 
+                    #     # external site에서 가져온 회원정보 보내주기
+                    #     userInfo = {"email":id_info["email"] , "nickname": id_info["name"], "profile_img":id_info["picture"] }
             
-                        return {'status' : 200 , 'message' : "success", "userInfo": userInfo}
+                    #     return {'status' : 200 , 'message' : "success", "userInfo": userInfo}
 
 
             except Error as e:
