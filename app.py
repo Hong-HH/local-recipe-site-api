@@ -12,6 +12,7 @@ from config import Config
 from resource.login import UserLoginResource
 from resource.register import UserRegisterResource
 from resource.recipe_list import RescipeListResource
+from resource.recipe import RescipeResource
 
 
 app = Flask(__name__)
@@ -54,7 +55,7 @@ api.add_resource(UserRegisterResource, '/v1/user/register')
 api.add_resource(UserLoginResource, '/v1/user/login')
 # api.add_resource(LogoutResource, '/v1/user/logout')
 api.add_resource(RescipeListResource, '/v1/recipe')
-api.add_resource()
+api.add_resource(RescipeResource, '/v1/recipe/<int:recipe_id>')
 
 
 
