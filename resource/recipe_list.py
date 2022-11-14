@@ -13,7 +13,7 @@ from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 
-from functions_for_recipe_list import recipe_list_map
+from functions_for_recipe import recipe_list_map
 
 # list_type_map = {
 #     "best" :'''select * from memo
