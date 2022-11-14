@@ -25,7 +25,7 @@ class RescipeResource(Resource) :
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = recipe_detail_query("recipe_user_info")
+            query = recipe_detail_query["recipe_user_info"]
             record = (recipe_id, )
             cursor.execute(query, record)
             # select 문은 아래 내용이 필요하다.
@@ -38,11 +38,10 @@ class RescipeResource(Resource) :
                             "mainSrc": record['mainSrc'],
                             "intro": record['intro'],
                             "writer":{ "id" : record['user_id'],"nickname," : record['nickname'], "profile_img" : record['profile_img']},
-                            "public": record['public'],
                             "created_at": record['created_at'].isoformat(),     
                             "updated_at": record['updated_at'].isoformat(),
                             "category": [record['c_type'],record['c_ctx'],record['c_ind']],
-                            "recipeInfo":  [record['c_s'],record['c_time'],record['c_level']]}
+                            "details":  [record['c_s'],record['c_time'],record['c_level']]}
                 print("i의 값은" + str(i))
                 i = i +1
 
@@ -60,7 +59,7 @@ class RescipeResource(Resource) :
             contents_list =  []
 
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = recipe_detail_query("recipe_ingredient")
+            query = recipe_detail_query["recipe_ingredient"]
             record = (recipe_id, )
             cursor.execute(query, record)
             # select 문은 아래 내용이 필요하다.
@@ -100,7 +99,7 @@ class RescipeResource(Resource) :
             step_list = []
 
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = recipe_detail_query("step")
+            query = recipe_detail_query["step"]
             record = (recipe_id, )
             cursor.execute(query, record)
             # select 문은 아래 내용이 필요하다.

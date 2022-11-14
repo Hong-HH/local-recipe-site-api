@@ -36,7 +36,7 @@ def recipe_list_map (list_type) :
     return list_type_map[list_type]
 
 
-
+# def recipe_detail_query_map (keyword) : 
 recipe_detail_query = {
                         "recipe_user_info" : ''' select r.id, r.user_id, u.nickname, u.profile_img, r.header_title as title, r.header_img as mainSrc, r.header_desc as intro, 
                         r.created_at, r.updated_at,  c1.name as c_type, c2.name as c_ctx , c3.name as c_ind, c4.name as c_s, c5.name as c_time,c6.name as c_level
@@ -84,3 +84,4 @@ recipe_detail_query = {
 
 
 }
+    # return recipe_detail_query[keyword]
