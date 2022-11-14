@@ -38,7 +38,7 @@ from functions_for_recipe_list import recipe_list_map
 
 # 레시피 리스트를 불러오는 함수 (옵션으로 검색이나 페이징 , 처리, 추천순 등 처리)
 
-class RescipeListSeperateResource(Resource) :
+class RescipeListResource(Resource) :
     
     def get(self) : 
         # 파라미터 딕셔너리 형태로 가져오기
