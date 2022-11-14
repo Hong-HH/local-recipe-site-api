@@ -38,34 +38,39 @@ def recipe_list_map (list_type) :
 
 # def recipe_detail_query_map (keyword) : 
 recipe_detail_query = {
-                        "recipe_user_info" : ''' select r.id, r.user_id, u.nickname, u.profile_img, r.header_title as title, r.header_img as mainSrc, r.header_desc as intro, 
-                        r.created_at, r.updated_at,  c1.name as c_type, c2.name as c_ctx , c3.name as c_ind, c4.name as c_s, c5.name as c_time,c6.name as c_level
-                        from 
-                        (select *
-                        from recipe
-                        where id = %s ) as r
-                        left join
-                        category as c1
-                        on r.category_type = c1.id
-                        left join
-                        category as c2
-                        on r.category_context = c2.id
-                        left join
-                        category as c3
-                        on r.category_ingredients = c3.id
-                        left join
-                        category as c4
-                        on r.servings = c4.id
-                        left join
-                        category as c5
-                        on r.time = c5.id
-                        left join
-                        category as c6
-                        on r.level = c6.id 
-                        left join
-                        (select un.id, un.nickname, un.profile_img
-                        from user as un) as u
-                        on r.user_id = u.id;  ''',
+                        "recipe_user_info" : '''
+                                            select r.id, r.user_id, u.nickname, u.profile_img, u.profile_desc, r.header_title as title, 
+                                            r.header_img as mainSrc, r.header_desc as intro, 
+                                            r.created_at, r.updated_at,  c1.name as c_type, c2.name as c_ctx , c3.name as c_ind, 
+                                            c4.name as c_s, c5.name as c_time,c6.name as c_level
+                                            from 
+                                            (select *
+                                            from recipe
+                                            where id = 2 ) as r
+                                            left join
+                                            category as c1
+                                            on r.category_type = c1.id
+                                            left join
+                                            category as c2
+                                            on r.category_context = c2.id
+                                            left join
+                                            category as c3
+                                            on r.category_ingredients = c3.id
+                                            left join
+                                            category as c4
+                                            on r.servings = c4.id
+                                            left join
+                                            category as c5
+                                            on r.time = c5.id
+                                            left join
+                                            category as c6
+                                            on r.level = c6.id 
+                                            left join
+                                            (select un.id, un.nickname, un.profile_img , profile_desc
+                                            from user as un) as u
+                                            on r.user_id = u.id;
+
+                                            ''',
 
                         "recipe_ingredient" : '''select ifnull(ib.name, '재료')  as bundle ,i.name, ri.amount
                                                 from (select *

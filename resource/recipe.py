@@ -37,7 +37,7 @@ class RescipeResource(Resource) :
                             "title":record['title'],
                             "mainSrc": record['mainSrc'],
                             "intro": record['intro'],
-                            "writer":{ "id" : record['user_id'],"nickname," : record['nickname'], "profile_img" : record['profile_img']},
+                            "writer":{ "id" : record['user_id'],"nickname," : record['nickname'], "profile_img" : record['profile_img'], "profile_desc" :record['profile_desc'] },
                             "created_at": record['created_at'].isoformat(),     
                             "updated_at": record['updated_at'].isoformat(),
                             "category": [record['c_type'],record['c_ctx'],record['c_ind']],
