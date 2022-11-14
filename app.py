@@ -11,7 +11,7 @@ from urllib import parse
 from config import Config
 from resource.login import UserLoginResource
 from resource.register import UserRegisterResource
-from resource.recipe import RescipeListSeperateResource
+from resource.recipe_list import RescipeListSeperateResource
 
 
 app = Flask(__name__)
