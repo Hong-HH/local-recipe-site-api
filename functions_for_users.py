@@ -126,6 +126,8 @@ def refresh_naver_token (refresh_token) :
 
 
 
+# external_type 을 넣으면 id 값이 나오는 함수
+
 
 # todo id_token 이 만료되었다면 재발급 함수
 

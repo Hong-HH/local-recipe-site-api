@@ -40,13 +40,13 @@ def recipe_list_map (list_type) :
 recipe_detail_query = {
                         "recipe_user_info" : '''
                                             select r.id, r.user_id, u.nickname, u.profile_img, u.profile_desc, r.header_title as title, 
-                                            r.header_img as mainSrc, r.header_desc as intro, 
+                                            r.header_img as mainSrc, r.header_desc as intro, r.result_img,
                                             r.created_at, r.updated_at,  c1.name as c_type, c2.name as c_ctx , c3.name as c_ind, 
                                             c4.name as c_s, c5.name as c_time,c6.name as c_level
                                             from 
                                             (select *
                                             from recipe
-                                            where id = 2 ) as r
+                                            where id = %s ) as r
                                             left join
                                             category as c1
                                             on r.category_type = c1.id
@@ -69,7 +69,6 @@ recipe_detail_query = {
                                             (select un.id, un.nickname, un.profile_img , profile_desc
                                             from user as un) as u
                                             on r.user_id = u.id;
-
                                             ''',
 
                         "recipe_ingredient" : '''select ifnull(ib.name, '재료')  as bundle ,i.name, ri.amount
@@ -85,7 +84,27 @@ recipe_detail_query = {
                         "step" : '''select description, img
                                     from recipe_step
                                     where recipe_id = %s
-                                    order by step;'''
+                                    order by step;''',
+
+                        "like_view" : '''select v.views, l.like_cnt
+                                            from 
+                                            (select ifnull(recipe_id, %s) as recipe_id, count(*) as views
+                                            from user_history
+                                            where recipe_id = %s) as v
+                                            join
+                                            (select  ifnull(recipe_id, %s) as recipe_id ,  count(*) as like_cnt
+                                            from likes
+                                            where recipe_id = %s) as l
+                                            using (recipe_id);''',
+
+                        "is_liked" : '''select *
+                                        from likes
+                                        where recipe_id = %s and user_id = %s;''',
+
+                        "add_view" : '''insert into user_history
+                                        (user_id,recipe_id)
+                                        values
+                                        (%s, %s);'''
 
 
 }

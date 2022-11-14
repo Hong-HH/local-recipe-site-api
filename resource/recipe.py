@@ -3,6 +3,7 @@ from flask.json import jsonify
 from flask_restful import Resource
 from http import HTTPStatus
 import requests
+import time
 
 from mysql_connection import get_connection
 from mysql.connector.errors import Error
@@ -20,6 +21,10 @@ class RescipeResource(Resource) :
     def get(self, recipe_id) : 
         # 요청한 레시피에 대한 상세정보 리턴하는 api
 
+        start_time = time.time()
+        # 파라미터에서 external_type 가져오기
+        external_type = request.args.get('external_type')
+
         try :       
             # 1. db 접속
             connection = get_connection()
@@ -33,15 +38,22 @@ class RescipeResource(Resource) :
             record_list = cursor.fetchall()
             i = 0
             for record in record_list:
-                recipe = {"recipe_id": record['id'],
+                if record["result_img"] :
+                    result_img = record["result_img"]
+                else :
+                    result_img = record['mainSrc']
+
+                recipe = {"recipeId": record['id'],
                             "title":record['title'],
                             "mainSrc": record['mainSrc'],
                             "intro": record['intro'],
                             "writer":{ "id" : record['user_id'],"nickname," : record['nickname'], "profile_img" : record['profile_img'], "profile_desc" :record['profile_desc'] },
-                            "created_at": record['created_at'].isoformat(),     
-                            "updated_at": record['updated_at'].isoformat(),
+                            "createdAt": record['created_at'].isoformat(),     
+                            "updatedAt": record['updated_at'].isoformat(),
                             "category": [record['c_type'],record['c_ctx'],record['c_ind']],
-                            "details":  [record['c_s'],record['c_time'],record['c_level']]}
+                            "details":  [record['c_s'],record['c_time'],record['c_level']],
+                            "resultSrc" : result_img
+                            }
                 print("i의 값은" + str(i))
                 i = i +1
 
@@ -78,9 +90,11 @@ class RescipeResource(Resource) :
                     else : 
                         # bundle 변수의 값이  record["bundle"]  와 다르다면 ingredients_list 에 기존 값들을 저장해준 후 
                         ingredients_list.append({ "name": bundle , "contents": contents_list})
-                        # bundle 재정의 후 재료 저장
+        
 
+                        # bundle, contents_list 재정의 후 재료 저장
                         bundle = record["bundle"]
+                        contents_list = []
                         contents_list.append([record["name"], record["amount"]])                
                 i = i +1
             # 마지막으로 저장된 재료들도 리스트에 넣어주자.
@@ -119,6 +133,84 @@ class RescipeResource(Resource) :
             return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR       
         
 
+        try :
+            # 2. 해당 테이블, recipe 테이블에서 select
+            query = recipe_detail_query["like_view"]
+            record = (recipe_id, recipe_id, recipe_id, recipe_id)
+            cursor.execute(query, record)
+            # select 문은 아래 내용이 필요하다.
+            # 커서로 부터 실행한 결과 전부를 받아와라.
+            record_list = cursor.fetchall()
+
+            print(record_list)
+
+
+            recipe["view"]= record_list[0]["views"]
+            recipe["like"]= record_list[0]["like_cnt"]
+
+
+        # 3. 클라이언트에 보낸다. 
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+
+
+        # # 유저가 로그인을 했다면 ... 좋아요 여부 리턴
+        # try :
+        #     if external_type:
+
+                
+
+        #         # 2. 해당 테이블, recipe 테이블에서 select
+        #         query = recipe_detail_query["like_view"]
+        #         record = (recipe_id, recipe_id)
+        #         cursor.execute(query, record)
+        #         # select 문은 아래 내용이 필요하다.
+        #         # 커서로 부터 실행한 결과 전부를 받아와라.
+        #         record_list = cursor.fetchall()
+                
+        #         recipe["view"]= record_list[0]["views"]
+        #         recipe["like"]= record_list[0]["like_cnt"]
+
+        #     else :
+        #         print("로그인 하지 않은 대상이 레시피에 접속")
+
+        # # 3. 클라이언트에 보낸다. 
+        # except Error as e :
+        #     # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+        #     print('Error while connecting to MySQL', e)
+        #     return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+        
+        # # 조회수 올리자...
+        # try :
+    #         # 2. 해당 테이블, recipe 테이블에서 select
+    #         query = recipe_detail_query["add_view"]
+    #         if external_type :
+    #           record = (user_id, recipe_id)
+    #         else :
+    #           record = (14, recipe_id)
+    #         cursor.execute(query, record)
+    #         # select 문은 아래 내용이 필요하다.
+    #         # 커서로 부터 실행한 결과 전부를 받아와라.
+    #         record_list = cursor.fetchall()
+            
+    #         recipe["view"]= record_list[0]["views"]
+    #         recipe["like"]= record_list[0]["like_cnt"]
+
+
+        # # 3. 클라이언트에 보낸다. 
+        # except Error as e :
+        #     # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+        #     print('Error while connecting to MySQL', e)
+        #     return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+
+        
+
+
         # finally 는 try에서 에러가 나든 안나든, 무조건 실행하라는 뜻.
         finally : 
             print('finally')
@@ -128,4 +220,50 @@ class RescipeResource(Resource) :
                 print('MySQL connection is closed')
             else :
                 print('connection does not exist')
+
+            print("---{}s seconds---".format(str(time.time()-start_time)))
+
         return {'status' : 200, 'recipeInfo' : recipe }, HTTPStatus.OK
+
+
+
+
+
+
+
+
+    def post(self) :
+        # let example = {
+#   user_id: 1, title: "기",mainSrc: "jpeg",
+#   intro:"em!",
+#   category: ["분식류", "간편식", "곡류"], recipeInfo: ["2인분", "20분이내", "아무나"],
+#   ingredients: [
+                #     {
+                #     name: "양념장",
+                #     contents: [
+                                    # ["고추장", "4T"],
+                                    # ["설탕", "2T"],
+                                    # ["간장", "2T"],
+                                    # ["다진마늘", "0.5T"],
+                                    # ["라면스프", "2T"],
+                #               ],
+                #     },
+                #     {
+                #     name: "부가재료",
+                #     contents: [
+                            #         ["떡", "300g"],
+                            #         ["대파", "1개"],
+                            #         ["삶은 계란", "1~2개"],
+                            #         ["쫄면", "100g"],
+                #               ],
+                #     },
+                # ],
+#   steps: [   ["text",".png",],["text",".png",], ["text",".png",]   ]
+
+
+    # 유저 인증 과정 거쳐서 유저 id 겟
+
+    
+
+
+        pass
