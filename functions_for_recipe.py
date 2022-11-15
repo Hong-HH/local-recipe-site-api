@@ -81,7 +81,7 @@ recipe_detail_query = {
                                                 on ri.bundle_id = ib.id
                                                 order by bundle;''',
 
-                        "step" : '''select description, img
+                        "step" : '''select step, description, img
                                     from recipe_step
                                     where recipe_id = %s
                                     order by step;''',
@@ -99,12 +99,28 @@ recipe_detail_query = {
 
                         "is_liked" : '''select *
                                         from likes
-                                        where recipe_id = %s and user_id = %s;''',
+                                        where recipe_id = 3 and user_id = 13;''',
 
                         "add_view" : '''insert into user_history
                                         (user_id,recipe_id)
                                         values
-                                        (%s, %s);'''
+                                        (%s, %s);''',
+
+                        "get_user_id" : '''select id, external_id
+                                            from user
+                                            where external_id = %s;''',
+
+                        "get_category_id" : '''select * from category
+                                                where name in (%s, %s, %s, %s, %s, %s )
+                                                order by id;''',
+
+
+                        "add_recipe" : '''insert into recipe
+                                        (user_id,public, category_type, category_context, category_ingredients, header_img, header_title, header_desc, servings, time, level, result_img)
+                                        values
+                                        (%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s);'''
+
+
 
 
 }

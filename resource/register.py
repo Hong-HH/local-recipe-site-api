@@ -33,19 +33,8 @@ class UserRegisterResource(Resource) :
             print("회원가입 절차 시작")
 
             # 엑세스 토큰 확인
-            if "access_token" in data :
-                access_token = data["access_token"]
-                refresh_token = request.cookies.get('refresh_token')
-
-            # else :
-            #     # 엑세스 토큰이 없다면 엑세스 토큰 발급
-            #     code = data["code"]
-            #     state = data["state"]
-
-            #     # 함수를 사용하여 access_token, refresh_token를 받는다.
-            #     token_result = get_naver_token(code, state)
-            #     access_token = token_result["access_token"]
-            #     refresh_token = token_result["refresh_token"]
+            access_token =  request.headers.get('Token') 
+            refresh_token = request.cookies.get('refresh_token')
 
 
             # 엑세스 토큰 유효성 검사 겸 유저 정보 겟

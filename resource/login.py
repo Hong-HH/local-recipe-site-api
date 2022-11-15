@@ -35,13 +35,8 @@ class UserLoginResource(Resource) :
             try : 
                 connection = get_connection()
                 cursor = connection.cursor(dictionary = True)
-                # 2-1. access_token 있으면 변수에 저장
-                if "access_token" in data :
-                    access_token = data["access_token"]
-                    refresh_token = request.cookies.get('refresh_token')
-                    
-                # 2-1. access_token 없으면 access_token 발급
-                else :
+                
+                if "code" in data :
                     # data 에서 code 와 state 값 받기
                     print("access_token 발급 시작")
                     code = data["code"]
@@ -51,6 +46,14 @@ class UserLoginResource(Resource) :
                     token_result = get_naver_token(code, state)
                     access_token = token_result["access_token"]
                     refresh_token = token_result["refresh_token"]
+                    
+                    
+                # 2-1. access_token 없으면 access_token 발급
+                else :
+                    # 2-1. access_token 있으면 변수에 저장
+                    access_token =  request.headers.get('Token') 
+                    refresh_token = request.cookies.get('refresh_token')
+                    
 
                     
                 # 3. access_token 유효성 검사 및 유저 정보 겟

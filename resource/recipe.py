@@ -14,6 +14,7 @@ from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 from functions_for_recipe import recipe_detail_query
+from functions_for_users import get_external_id
 
 
 class RescipeResource(Resource) :
@@ -22,8 +23,10 @@ class RescipeResource(Resource) :
         # 요청한 레시피에 대한 상세정보 리턴하는 api
 
         start_time = time.time()
+        params = request.args.to_dict()
         # 파라미터에서 external_type 가져오기
-        external_type = request.args.get('external_type')
+        # external_type = request.args.get('external_type')
+
 
         try :       
             # 1. db 접속
@@ -89,7 +92,7 @@ class RescipeResource(Resource) :
 
                     else : 
                         # bundle 변수의 값이  record["bundle"]  와 다르다면 ingredients_list 에 기존 값들을 저장해준 후 
-                        ingredients_list.append({ "name": bundle , "contents": contents_list})
+                        ingredients_list.append({ "title": bundle , "contents": contents_list})
         
 
                         # bundle, contents_list 재정의 후 재료 저장
@@ -98,7 +101,7 @@ class RescipeResource(Resource) :
                         contents_list.append([record["name"], record["amount"]])                
                 i = i +1
             # 마지막으로 저장된 재료들도 리스트에 넣어주자.
-            ingredients_list.append({ "name": bundle , "contents": contents_list})
+            ingredients_list.append({ "title": bundle , "contents": contents_list})
             # 리턴할 딕셔너리에 넣어주자.
             recipe["ingredients"] = ingredients_list
 
@@ -110,8 +113,6 @@ class RescipeResource(Resource) :
 
 
         try :
-            step_list = []
-
             # 2. 해당 테이블, recipe 테이블에서 select
             query = recipe_detail_query["step"]
             record = (recipe_id, )
@@ -119,12 +120,8 @@ class RescipeResource(Resource) :
             # select 문은 아래 내용이 필요하다.
             # 커서로 부터 실행한 결과 전부를 받아와라.
             record_list = cursor.fetchall()
-            i = 0
-            for record in record_list:          
-                step_list.append([record["description"], record["img"]])
-                i = i +1
 
-            recipe["steps"] = step_list
+            recipe["steps"] = record_list
             
         # 3. 클라이언트에 보낸다. 
         except Error as e :
@@ -157,58 +154,76 @@ class RescipeResource(Resource) :
 
 
 
-        # # 유저가 로그인을 했다면 ... 좋아요 여부 리턴
-        # try :
-        #     if external_type:
+        # 유저가 로그인을 했다면 ... 좋아요 여부 리턴
+        try :            
+            if "external_type" in params:
+                # 파라미터에서 external_type 가져오기
+                external_type = request.args.get('external_type')
+                token =  request.headers.get('Token') 
+                id_result = get_external_id(external_type, token)
 
+                if id_result["status"] == 200 :
+                    external_id = id_result["external_id"]
+
+                else :
+                    # 나중에 통합한 토큰 재발급 함수 추가
+                    print("토큰 만료")
+
+                try :
+                    query = recipe_detail_query["get_user_id"]
+                    record = (external_id, )
+                    cursor.execute(query, record)
+                    # select 문은 아래 내용이 필요하다.
+                    # 커서로 부터 실행한 결과 전부를 받아와라.
+                    record_list = cursor.fetchall()
+                    user_id = record_list[0]["user_id"]
+                except Error as e :
+                    # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+                    print('Error while connecting to MySQL', e)
+                    return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+
+                # 2. 해당 테이블, recipe 테이블에서 select
+                query = recipe_detail_query["is_liked"]
+                record = (recipe_id, user_id)
+                cursor.execute(query, record)
+                # select 문은 아래 내용이 필요하다.
+                # 커서로 부터 실행한 결과 전부를 받아와라.
+                record_list = cursor.fetchall()
                 
+                if len(record_list) == 1 :
+                    recipe["isLiked"]= True
+                    
+                else :
+                    recipe["isLiked"]= False
 
-        #         # 2. 해당 테이블, recipe 테이블에서 select
-        #         query = recipe_detail_query["like_view"]
-        #         record = (recipe_id, recipe_id)
-        #         cursor.execute(query, record)
-        #         # select 문은 아래 내용이 필요하다.
-        #         # 커서로 부터 실행한 결과 전부를 받아와라.
-        #         record_list = cursor.fetchall()
-                
-        #         recipe["view"]= record_list[0]["views"]
-        #         recipe["like"]= record_list[0]["like_cnt"]
 
-        #     else :
-        #         print("로그인 하지 않은 대상이 레시피에 접속")
+            else :
+                print("로그인 하지 않은 대상이 레시피에 접속")
 
-        # # 3. 클라이언트에 보낸다. 
-        # except Error as e :
-        #     # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
-        #     print('Error while connecting to MySQL', e)
-        #     return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+        # 3. 클라이언트에 보낸다. 
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
 
         
-        # # 조회수 올리자...
-        # try :
-    #         # 2. 해당 테이블, recipe 테이블에서 select
-    #         query = recipe_detail_query["add_view"]
-    #         if external_type :
-    #           record = (user_id, recipe_id)
-    #         else :
-    #           record = (14, recipe_id)
-    #         cursor.execute(query, record)
-    #         # select 문은 아래 내용이 필요하다.
-    #         # 커서로 부터 실행한 결과 전부를 받아와라.
-    #         record_list = cursor.fetchall()
-            
-    #         recipe["view"]= record_list[0]["views"]
-    #         recipe["like"]= record_list[0]["like_cnt"]
+        # 조회수 올리자...
+        try :
+            # 2. 해당 테이블, recipe 테이블에서 select
+            query = recipe_detail_query["add_view"]
+            if "external_type" in params :
+              record = (user_id, recipe_id)
+            else :
+              record = (14, recipe_id)
+            cursor.execute(query, record)
+            connection.commit()
+        # 3. 클라이언트에 보낸다. 
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
 
-
-        # # 3. 클라이언트에 보낸다. 
-        # except Error as e :
-        #     # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
-        #     print('Error while connecting to MySQL', e)
-        #     return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
-
-
-        
 
 
         # finally 는 try에서 에러가 나든 안나든, 무조건 실행하라는 뜻.
@@ -233,37 +248,130 @@ class RescipeResource(Resource) :
 
 
     def post(self) :
-        # let example = {
-#   user_id: 1, title: "기",mainSrc: "jpeg",
-#   intro:"em!",
-#   category: ["분식류", "간편식", "곡류"], recipeInfo: ["2인분", "20분이내", "아무나"],
-#   ingredients: [
-                #     {
-                #     name: "양념장",
-                #     contents: [
-                                    # ["고추장", "4T"],
-                                    # ["설탕", "2T"],
-                                    # ["간장", "2T"],
-                                    # ["다진마늘", "0.5T"],
-                                    # ["라면스프", "2T"],
-                #               ],
-                #     },
-                #     {
-                #     name: "부가재료",
-                #     contents: [
-                            #         ["떡", "300g"],
-                            #         ["대파", "1개"],
-                            #         ["삶은 계란", "1~2개"],
-                            #         ["쫄면", "100g"],
-                #               ],
-                #     },
-                # ],
-#   steps: [   ["text",".png",],["text",".png",], ["text",".png",]   ]
+
+        # 1. 요소가 다 있는지 체크 , 없으면 return 
 
 
-    # 유저 인증 과정 거쳐서 유저 id 겟
+        # 2. 클라이언트로 부터 데이터 받기
+        data = request.get_json()
 
-    
+        try :       
+            # 3. db 접속
+            connection = get_connection()
+            cursor = connection.cursor(dictionary = True)
+
+            # 4. 유저 인증 과정 거쳐서 유저 id 겟
+            external_type = request.args.get('external_type')
+            token =  request.headers.get('Token') 
+            id_result = get_external_id(external_type, token)
+
+            if id_result["status"] == 200 :
+                    external_id = id_result["external_id"]
+
+            else :
+                # 나중에 통합한 토큰 재발급 함수 추가
+                print("토큰 만료")
+        
+            query = recipe_detail_query["get_user_id"]
+            record = (external_id, )
+            cursor.execute(query, record)
+            # select 문은 아래 내용이 필요하다.
+            # 커서로 부터 실행한 결과 전부를 받아와라.
+            record_list = cursor.fetchall()
+            user_id = record_list[0]["user_id"]
+
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
 
 
-        pass
+        try :
+            # 5. 카테고리 아이디로 변환 
+            query = recipe_detail_query["get_category_id"]
+            c1 = data["category"]
+            c2 = data["details"]
+                        
+            record = (c1[0], c1[1], c1[2], c2[0], c2[1], c2[2])
+            cursor.execute(query, record)
+
+            # select 문은 아래 내용이 필요하다.
+            # 커서로 부터 실행한 결과 전부를 받아와라.
+            record_list = cursor.fetchall()
+            c_list = []
+            i = 0
+            for record in record_list:
+                c_list.append(record["id"])
+                i = i + 1
+
+            print(c_list)
+
+            #  6. 필수가 아닌 값, 없으면 NULL 로 저장
+            if "resultSrc" in data :
+                resultSrc = data["resultSrc"]
+            else :
+                resultSrc = None
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+
+        try :
+            # 2. 해당 테이블, recipe 테이블에서 select
+            query = recipe_detail_query["add_recipe"]
+            # 아래 것들 중 result_img 는 필수가 아님
+            # insert into recipe
+            # (user_id,public, category_type, category_context, category_ingredients, header_img, header_title, header_desc,
+            #  servings, time, level, result_img)
+            # values
+            # (2, 1, 1, 13, 21, "img_url", "배추김치", "아삭아삭 배추김치", 35, 44, 49, "result_img_url");
+
+            record = (user_id, data["public"],c_list[0],c_list[1],c_list[2],data["mainSrc"],data["title"],data["intro"],c_list[3],c_list[4],c_list[5],resultSrc)
+
+            cursor.execute(query, record)
+            connection.commit()
+        # 3. 클라이언트에 보낸다. 
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+
+        try :
+            # 2. 재료를 넣어보자
+            # 번들네임 리스트 생성
+            # 반복문 시작
+            # 재료 id 를 찾고
+            # 없으면 insert 해주고
+            #  select * from ingredient
+            # where name = "후추";  
+            # 번들에 insert 해주고
+            # 번들 id 가져와서
+            # 레시피 인그리디언트에 삽입
+
+            query = recipe_detail_query["add_recipe"]
+            record = ()
+            cursor.execute(query, record)
+            connection.commit()
+        # 3. 클라이언트에 보낸다. 
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
+
+
+
+        
+
+
+
+        # finally 는 try에서 에러가 나든 안나든, 무조건 실행하라는 뜻.
+        finally : 
+            print('finally')
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+                print('MySQL connection is closed')
+            else :
+                print('connection does not exist')

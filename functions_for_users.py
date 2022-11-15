@@ -13,6 +13,47 @@ from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 
+#  todo 통합으로 토큰 재발급 하는 거 코드 만들기
+
+
+# 통합 : 토큰 유효성 검사 및 external_id 값 리턴
+def get_external_id(external_type, token) :
+    # 받아온 토큰으로 유효성 검사를 해보자.
+    if external_type == "naver" :
+        # 3. access_token 유효성 검사 및 유저 정보 겟
+        profile_result = get_naver_profile(token)
+        if profile_result["result_code"] == "00" :
+            profile_info = profile_result["profile_info"]
+            return  {"status" : 200 , 'message' : "success", 'external_id' : profile_info["id"] , 'user_info' : profile_info }
+        else :
+            # todo access token 만료이므로 재발급
+            print("access token 이 유효하지 않음")
+            return {"status" : 400 , 'message' : "access token 만료"}
+
+    elif external_type == "google" :
+        try:
+            # Specify the CLIENT_ID of the app that accesses the backend:
+            id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+
+            return {"status" : 200 , 'message' : "success", 'external_id' : id_info["sub"] , 'user_info' : profile_info }
+
+        except ValueError:
+            # Invalid token
+            print("Invalid token")
+
+            # todo 만약 id_token 이 만료되었다면 재발급
+
+
+            # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
+            return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
+    
+    return True
+
+
+
+
+
+
 
 # 회원가입 여부 확인
 def check_user(cursor, external_type,external_id) :
