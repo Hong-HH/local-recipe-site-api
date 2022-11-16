@@ -34,8 +34,8 @@ def get_external_id(external_type, token) :
         try:
             # Specify the CLIENT_ID of the app that accesses the backend:
             id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
-
-            return {"status" : 200 , 'message' : "success", 'external_id' : id_info["sub"] , 'user_info' : profile_info }
+            print({"status" : 200 , 'message' : "success", 'external_id' : id_info["sub"] , 'user_info' : id_info })
+            return {"status" : 200 , 'message' : "success", 'external_id' : id_info["sub"] , 'user_info' : id_info }
 
         except ValueError:
             # Invalid token
@@ -46,8 +46,7 @@ def get_external_id(external_type, token) :
 
             # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
             return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
-    
-    return True
+
 
 
 
