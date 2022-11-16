@@ -51,6 +51,28 @@ def get_external_id(external_type, token) :
 
 
 
+def get_refresh_token(external_type, refresh_token):
+    # todo 구글 리플레시 토큰 추가하기
+
+    if external_type == "naver" :
+        access_token = refresh_naver_token(refresh_token)
+        profile_result = get_naver_profile(access_token)
+        if profile_result["result_code"] == "00" :
+            profile_info = profile_result["profile_info"]
+            return {"status" : 200 , 'message' : "success", 'token' : access_token}
+        else :
+            print("access token 발급에 문제 발생")
+            return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
+
+
+    elif external_type == "google" :
+        # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
+        return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
+
+
+
+
+
 
 
 

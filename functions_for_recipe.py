@@ -118,7 +118,26 @@ recipe_detail_query = {
                         "add_recipe" : '''insert into recipe
                                         (user_id,public, category_type, category_context, category_ingredients, header_img, header_title, header_desc, servings, time, level, result_img)
                                         values
-                                        (%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s);'''
+                                        (%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s);''',
+
+                        "get_ingredient_id" : '''select * from ingredient
+                                                    where name = %s;''',
+                            
+                        "get_bundle_id" : '''insert into
+                                            ingredient_bundle
+                                            (name)
+                                            values
+                                            (%s);''',
+
+                        "insert_get_ingredient_id" : '''insert into ingredient
+                                                            (name)
+                                                            values
+                                                            (%s);''',
+
+                        "insert_recipe_ingredient" : '''insert into recipe_ingredient
+                                                        (recipe_id, ingredient_id, amount, bundle_id)
+                                                        values
+                                                        (%s, %s, %s, %s);'''
 
 
 

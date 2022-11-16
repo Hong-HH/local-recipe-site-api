@@ -14,7 +14,7 @@ from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 from functions_for_recipe import recipe_detail_query
-from functions_for_users import get_external_id
+from functions_for_users import get_external_id, get_refresh_token
 
 
 class RescipeResource(Resource) :
@@ -270,6 +270,21 @@ class RescipeResource(Resource) :
 
             else :
                 # 나중에 통합한 토큰 재발급 함수 추가
+                if external_type == "naver" :
+                    refresh_token = request.cookies.get('refresh_token')
+                    token = get_refresh_token(external_type, refresh_token )
+                    #  다시한번 유저 인증 과정 거쳐서 유저 id 겟 시도
+                    id_result = get_external_id(external_type, token)
+                    if id_result["status"] == 200 :
+                        external_id = id_result["external_id"]
+
+                    else :
+                        return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
+
+
+                elif external_type == "google" :
+                     {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
+
                 print("토큰 만료")
         
             query = recipe_detail_query["get_user_id"]
@@ -331,6 +346,8 @@ class RescipeResource(Resource) :
 
             cursor.execute(query, record)
             connection.commit()
+            recipe_id = cursor.lastrowid
+
         # 3. 클라이언트에 보낸다. 
         except Error as e :
             # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
@@ -350,10 +367,83 @@ class RescipeResource(Resource) :
             # 번들 id 가져와서
             # 레시피 인그리디언트에 삽입
 
-            query = recipe_detail_query["add_recipe"]
-            record = ()
-            cursor.execute(query, record)
-            connection.commit()
+            ingredients_list = data["ingredients"]
+            
+            row = 0
+            i = 0
+
+            for ingredient in ingredients_list :
+                # 먼저 재료 타이틀을 번들에 추가하여 id 를 받는다. 
+                try :                        
+                    query = recipe_detail_query["get_bundle_id"]
+                    record = (ingredient['title'], )
+                    cursor.execute(query, record)
+                    # select 문은 아래 내용이 필요하다.
+                    # 커서로 부터 실행한 결과 전부를 받아와라.
+                    connection.commit()
+                    bundle_id = cursor.lastrowid
+
+                # 3. 클라이언트에 보낸다. 
+                except Error as e :
+                    # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+                    print('Error while connecting to MySQL', e)
+                    return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR       
+
+                # 번들 재료 id를 get 하여 insert 하자.
+                for content in ingredient['contents'] :
+                    #  ingredient 테이블에서 select 
+                    try :                        
+                        query = recipe_detail_query["get_ingredient_id"]
+                        record = (content[row][0], )
+                        cursor.execute(query, record)
+                        # select 문은 아래 내용이 필요하다.
+                        # 커서로 부터 실행한 결과 전부를 받아와라.
+                        record_list = cursor.fetchall()
+                       
+                    # 3. 클라이언트에 보낸다. 
+                    except Error as e :
+                        # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+                        print('Error while connecting to MySQL', e)
+                        return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR       
+                    
+                    if len(record_list) == 1 :
+                        content_id = record_list[0]["id"]
+
+                    else :
+                        # 저장된 재료가 아니므로 ingredient 테이블에 추가
+                        try :                        
+                            query = recipe_detail_query["insert_get_ingredient_id"]
+                            record = (content[row][0], )
+                            cursor.execute(query, record)
+                            # select 문은 아래 내용이 필요하다.
+                            # 커서로 부터 실행한 결과 전부를 받아와라.
+                            connection.commit()
+                            content_id = cursor.lastrowid
+
+                        # 3. 클라이언트에 보낸다. 
+                        except Error as e :
+                            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+                            print('Error while connecting to MySQL', e)
+                            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR       
+                    
+                    try :                        
+                            query = recipe_detail_query["insert_recipe_ingredient"]
+                            record = (recipe_id,content_id, content[row][1], bundle_id )
+                            cursor.execute(query, record)
+                            # select 문은 아래 내용이 필요하다.
+                            # 커서로 부터 실행한 결과 전부를 받아와라.
+                            connection.commit()
+                                                
+                    except Error as e :
+                        # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+                        print('Error while connecting to MySQL', e)
+                        return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR       
+                    
+
+                    row = row + 1
+
+                i = i + 1
+
         # 3. 클라이언트에 보낸다. 
         except Error as e :
             # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
@@ -361,10 +451,29 @@ class RescipeResource(Resource) :
             return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR  
 
 
+        # 요리 순서를 저장해보자        
+        try :
+            i = 0                      
+            for step in data["steps"] :  
+                order = i+1
+                query = '''insert into
+                            recipe_step
+                            (recipe_id, step, description, img)
+                            values
+                            (%s, %s, %s, %s);'''
+                record = (recipe_id, order ,step[0], step[1])
+                cursor.execute(query, record)
+                # select 문은 아래 내용이 필요하다.
+                # 커서로 부터 실행한 결과 전부를 받아와라.
+                connection.commit()
 
+                i= i+1
+                                    
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR       
         
-
-
 
         # finally 는 try에서 에러가 나든 안나든, 무조건 실행하라는 뜻.
         finally : 
