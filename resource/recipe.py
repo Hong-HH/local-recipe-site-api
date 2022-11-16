@@ -242,11 +242,6 @@ class RescipeResource(Resource) :
 
 
 
-
-
-
-
-
     def post(self) :
 
         # 1. 요소가 다 있는지 체크 , 없으면 return 
@@ -468,6 +463,8 @@ class RescipeResource(Resource) :
                 connection.commit()
 
                 i= i+1
+
+            # return {'status' : 200 ,'message' : "success"}
                                     
         except Error as e :
             # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
@@ -484,3 +481,5 @@ class RescipeResource(Resource) :
                 print('MySQL connection is closed')
             else :
                 print('connection does not exist')
+
+        return {'status' : 200 ,'message' : "success"}
