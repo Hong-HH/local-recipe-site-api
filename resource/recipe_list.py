@@ -34,8 +34,6 @@ class RescipeListResource(Resource) :
         # 현재 파라미터로 고려중인 값 : 카테고리 종류("전체, 반찬 등"),정렬방식(좋아요, 최신, 조회순),검색어(선택),offset,limit
         list_type = params["list_type"]
 
-
-
         try :       
             # 1. db 접속
             connection = get_connection()

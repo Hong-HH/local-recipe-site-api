@@ -49,6 +49,15 @@ def get_external_id(external_type, token) :
 
 
 
+# 음 .. 위에거랑 합쳐서 하나로 만들자..
+def get_user_id(external_id) :
+
+     '''select id, external_id
+                                            from user
+                                            where external_id = %s;'''
+
+
+
 
 def get_refresh_token(external_type, refresh_token):
     # todo 구글 리플레시 토큰 추가하기
