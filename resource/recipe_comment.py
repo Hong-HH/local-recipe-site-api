@@ -18,6 +18,9 @@ from functions_for_users import get_external_id, get_refresh_token
 
 
 class CommentListResource(Resource) :
+
+    # offset , limit 방식보다
+    # 커서 방식
     
     def get(self, recipe_id) : 
 
