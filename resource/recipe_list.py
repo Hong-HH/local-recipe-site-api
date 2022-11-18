@@ -39,7 +39,10 @@ class RescipeListResource(Resource) :
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = recipe_list_map(list_type)
+
+            query = recipe_list_map(list_type, params) 
+
+                
             
             cursor.execute(query)
             # select 문은 아래 내용이 필요하다.

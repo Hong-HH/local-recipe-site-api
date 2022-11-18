@@ -4,34 +4,86 @@
 
 
 
-def recipe_list_map (list_type) :
-
+def recipe_list_map (list_type, params) :
 
     list_type_map = {
                     "best" :'''select r.id as recipe_id ,l_b_v.likes_cnt , l_b_v.views , r.user_id, u.nickname, u.profile_img , r.public, r.header_img, r.header_title, r.created_at
-                    from 
-                    (select l_b.recipe_id, l_b.likes_cnt , count(*) as views
-                    from 
-                    (SELECT recipe_id , count(*) as likes_cnt
-                    FROM likes
-                    group by recipe_id
-                    order by likes_cnt desc
-                    limit 0, 10) as l_b
+                                from 
+                                (select l_b.recipe_id, l_b.likes_cnt , count(*) as views
+                                from 
+                                (SELECT recipe_id , count(*) as likes_cnt
+                                FROM likes
+                                group by recipe_id
+                                order by likes_cnt desc
+                                limit 0, 10) as l_b
 
-                    left join user_history as uh
-                    on l_b.recipe_id = uh.recipe_id
-                    group by l_b.recipe_id) as l_b_v
+                                left join user_history as uh
+                                on l_b.recipe_id = uh.recipe_id
+                                group by l_b.recipe_id) as l_b_v
 
-                    left join recipe as r
-                    on l_b_v.recipe_id = r.id
+                                left join recipe as r
+                                on l_b_v.recipe_id = r.id
 
-                    left join
-                    (select un.id, un.nickname, un.profile_img
-                    from user as un) as u
-                    on r.user_id = u.id;'''
+                                left join
+                                (select un.id, un.nickname, un.profile_img
+                                from user as un) as u
+                                on r.user_id = u.id ''',
 
 
                         }
+
+    if list_type == "best" :
+        query =  list_type_map[list_type]
+        query = query + ''' where public = 1
+                            limit 10;'''
+        return query
+    elif list_type == "classification"  :
+        # text = "면류,술안주,해물류"
+        # text_list = text.split(",")
+        # ['면류', '술안주', '해물류']
+        # ['전체' , '전체', '전체']
+        
+        text = params["category"]
+        text_list = text.split(",")
+        if params["order_by"] == "like" :
+            query =  list_type_map["best"]
+
+            # 카테고리의 unique 값이 하나라면 3개의 카테고리 모두 전체이다.
+            if len(set(text_list)) == 1 :
+                query = query + ''' where public = 1 '''
+
+            else :
+                category_list = ['category_type','category_context','category_ingredients']
+                subquery_name_list = ['c1', 'c2' , 'c3']
+                after_query = ''' where public = 1 '''   
+
+                i = 0
+                for t in text_list:
+                    if t == "전체" :
+                        pass
+                    else :
+                        query = query + '''left join
+                                            (SELECT id FROM category 
+                                            where  FIELD(name, \"''' + t + '''\"  ) ) as '''+ subquery_name_list[i] + '''
+                                            on ''' + category_list[i] +''' = '''+ subquery_name_list[i]  + '''.id'''
+
+                        after_query = after_query + ''' and not ''' + subquery_name_list[i] + '''.id is null '''
+                    i = i + 1
+
+
+            if "target_id" in params:
+                query = query + " and id < " + params["target_id"] +  after_query     +  " limit 15;"
+                print (query)
+                return query
+            else :
+                query = query + after_query  +  " limit 15;"
+                print (query)
+                return query
+
+    elif list_type == "search"  :
+        pass
+
+
 
     return list_type_map[list_type]
 
