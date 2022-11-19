@@ -13,6 +13,7 @@ from resources.login import UserLoginResource
 from resources.register import UserRegisterResource
 from resources.recipe_list import RescipeListResource
 from resources.recipe import RescipeResource
+from resources.recipe_comment import RecipeCommentListResource, RecipeCommentResource
 
 
 app = Flask(__name__)
@@ -56,6 +57,8 @@ api.add_resource(UserLoginResource, '/v1/user/login')
 # api.add_resource(LogoutResource, '/v1/user/logout')
 api.add_resource(RescipeListResource, '/v1/recipe')
 api.add_resource(RescipeResource, '/v1/recipe/<int:recipe_id>')
+api.add_resource(RecipeCommentListResource, '/v1/recipe/<int:recipe_id>/comment')
+api.add_resource(RecipeCommentResource, '/v1/comment/<int:comment_id>')
 
 
 

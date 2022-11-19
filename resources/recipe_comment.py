@@ -17,7 +17,7 @@ from functions_for_users import get_external_id, get_refresh_token
 
 
 
-class CommentListResource(Resource) :
+class RecipeCommentListResource(Resource) :
 
     # offset , limit 방식보다
     # 커서 방식
@@ -112,10 +112,12 @@ class CommentListResource(Resource) :
             # select 문은 아래 내용이 필요하다.
             # 커서로 부터 실행한 결과 전부를 받아와라.
             record_list = cursor.fetchall()
-            return_list = []
             i = 0
             for record in record_list:
                 record_list[i]['created_at'] = record['created_at'].isoformat()
+                i = i + 1
+
+            print(record_list)
 
 
 
@@ -132,7 +134,7 @@ class CommentListResource(Resource) :
                 print('MySQL connection is closed')
             else :
                 print('connection does not exist')
-        return {'status' : 200, 'message' :  "success" ,'list' : return_list }, HTTPStatus.OK
+        return {'status' : 200, 'message' :  "success" ,'list' : record_list }, HTTPStatus.OK
 
 
 
@@ -216,7 +218,7 @@ class CommentListResource(Resource) :
 
 
 
-class CommentResource(Resource) :
+class RecipeCommentResource(Resource) :
 
     def put(self, comment_id) :
 
