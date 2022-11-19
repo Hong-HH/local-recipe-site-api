@@ -9,10 +9,10 @@ from http import HTTPStatus
 from urllib import parse
 
 from config import Config
-from resource.login import UserLoginResource
-from resource.register import UserRegisterResource
-from resource.recipe_list import RescipeListResource
-from resource.recipe import RescipeResource
+from resources.login import UserLoginResource
+from resources.register import UserRegisterResource
+from resources.recipe_list import RescipeListResource
+from resources.recipe import RescipeResource
 
 
 app = Flask(__name__)
