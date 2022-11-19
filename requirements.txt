@@ -9,3 +9,4 @@ email-validator
 passlib
 requests
 google-auth
+flask_cors

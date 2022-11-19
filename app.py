@@ -4,6 +4,8 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.exceptions import RevokedTokenError
 from jwt.exceptions import ExpiredSignatureError
+from flask_cors import CORS 
+
 
 from http import HTTPStatus
 from urllib import parse
@@ -17,12 +19,11 @@ from resources.recipe_comment import RecipeCommentListResource, RecipeCommentRes
 
 
 app = Flask(__name__)
+CORS(app) 
 
 # 환경 변수 세팅
 app.config.from_object(Config)
 
-# JWT 토큰 만들기
-jwt = JWTManager(app)
 
 # 로그아웃한 유저인지 확인하는 코드 
 # @jwt.token_in_blocklist_loader
