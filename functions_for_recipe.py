@@ -159,17 +159,29 @@ def recipe_list_map (params, category_id_list, c_list) :
             i = i + 1
 
         
-        end_query = ''' ) as rnl
+        middle_query = ''' ) as rnl
                         left join likes l
                         on rnl.id = l.recipe_id
-                        group by rnl.id) as rl
+                        group by rnl.id  
+                        order by  '''
+
+        end_query = '''  ) as rl
                         left join user_history as uh
                         on rl.id = uh.recipe_id
                         group by rl.id) as r
                         left join user u 
-                        on r.user_id = u.id; '''
+                        on r.user_id = u.id;  '''
 
-        query = start_query + keyword_query + condition_query +  ''' limit ''' + params["offset"] + ''' , '''+ params["limit"] + end_query
+        if params["order_by"] == "like" :
+            orders =''' likes_cnt desc '''
+        elif params["order_by"] == "created_at" :
+            orders = ''' rnl.id desc '''
+
+
+        query = start_query + keyword_query + condition_query +  ''' limit ''' + params["offset"] + ''' , '''+ params["limit"] 
+
+        query = query + middle_query +  orders  + end_query
+
 
         return query
 
