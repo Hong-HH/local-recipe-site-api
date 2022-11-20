@@ -37,7 +37,7 @@ class UserRecipeResource(Resource) :
             id_result = get_external_id(external_type, token)
 
             if id_result["status"] == 200 :
-                    external_id = id_result["external_id"]
+                external_id = id_result["external_id"]
 
             else :
                 # 나중에 통합한 토큰 재발급 함수 추가
