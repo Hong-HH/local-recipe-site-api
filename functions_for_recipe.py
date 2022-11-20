@@ -1,10 +1,44 @@
 
 # recipe list request type 에 대한 query 문 매칭
 
+def get_categoru_query(params) :
+    list_type = params["list_type"]
+    category_list = ['category_type','category_context','category_ingredients']
+    c_list = []
+
+    if list_type == "best" :
+        return None
+    
+    text = params["category"]
+    text_list = text.split(",")
+    if len(set(text_list)) == 1 :
+        return None
+    else :
+        i = 0
+        query = '''select *
+                    from category
+                    where field(name ''' 
+
+        for t in text_list:
+            if t == "전체" :
+                pass
+            else :
+                query = query +  ''', \"''' + t + '''\" '''
+                # 어느 카테고리인지 리스트에 저장
+                c_list.append(category_list[i])
+                
+            i = i + 1
+
+        query = query + ''');'''
+
+    print(query)
+
+    return [query, c_list]
 
 
 
-def recipe_list_map (list_type, params) :
+def recipe_list_map (params, category_id_list, c_list) :
+    list_type = params["list_type"]
 
     list_type_map = {
                     "best" :'''select r.id as recipe_id ,l_b_v.likes_cnt , l_b_v.views , r.user_id, u.nickname, u.profile_img , r.public, r.header_img, r.header_title, r.created_at
@@ -30,17 +64,16 @@ def recipe_list_map (list_type, params) :
                                 on r.user_id = u.id ''',
 
 
-                        "created_at_query_start" : '''  select rr.* , u.nickname, u.profile_img, u.profile_desc
+                        "created_at_query_start" : '''  select rr.* , u.nickname, u.profile_img
                                                         from 
                                                         (select r.* , count(uh.id) as views
                                                         from 
-                                                        (select rc.* ,  count(l.created_at) as like_cnt
+                                                        (select rc.* ,  count(l.created_at) as likes_cnt
                                                         from 
                                                         (select *
                                                         from recipe
                                                         where recipe.public = 1 ''',
-                        "created_at_query_end" : ''' order by id desc
-                                                        limit 10) as rc
+                        "created_at_query_end" : ''' ) as rc
                                                         left join likes as l
                                                         on rc.id = l.recipe_id 
                                                         group by rc.id) as r
@@ -51,7 +84,7 @@ def recipe_list_map (list_type, params) :
                                                         left join user as u
                                                         on rr.user_id = u.id; ''',
                         
-                        "best_query_start" : ''' select r.*, u.nickname, u.profile_img, u.profile_desc
+                        "best_query_start" : ''' select r.*, u.nickname, u.profile_img
                                                 from 
                                                 (select rl.*, count(uh.created_at) as views
                                                 from 
@@ -60,9 +93,8 @@ def recipe_list_map (list_type, params) :
                                                 left join likes l
                                                 on rn.id = l.recipe_id
                                                 group by recipe_id
-                                                having public = 1  ''',
-                        "best_query_end" : '''  limit 2  
-                                                order by likes_cnt desc) as rl
+                                                having public = 1  ''' ,
+                        "best_query_end" : '''  ) as rl
                                                 left join user_history as uh
                                                 on rl.id = uh.recipe_id
                                                 group by recipe_id) as r
@@ -73,52 +105,34 @@ def recipe_list_map (list_type, params) :
                         }
 
     if list_type == "best" :
-        query =  list_type_map[list_type]
-        query = query + ''' where public = 1
-                            limit 10;'''
+        query =  list_type_map["best_query_start"] +'''  order by likes_cnt desc limit ''' + str(10) + list_type_map["best_query_end"]
+        
         return query
     elif list_type == "classification"  :
-        # text = "면류,술안주,해물류"
-        # text_list = text.split(",")
-        # ['면류', '술안주', '해물류']
-        # ['전체' , '전체', '전체']
+        # category_id_list, c_list
+        condition_query = ''' '''
+
+        if len(category_id_list) != 0 :
+            i = 0
+            for c in category_id_list :
+                print(c)
+                print(c_list)
+                condition_query = condition_query + ''' and ''' + c_list[i] + ''' = ''' + str(c["id"])
+                i = i + 1
         
-        text = params["category"]
-        text_list = text.split(",")
+        if "target_id" in params:
+                condition_query = condition_query + ''' and id < ''' + params["target_id"] + ''' '''
+
+        
         if params["order_by"] == "like" :
-            query =  list_type_map["best"]
 
-            # 카테고리의 unique 값이 하나라면 3개의 카테고리 모두 전체이다.
-            if len(set(text_list)) == 1 :
-                query = query + ''' where public = 1 '''
+            query = list_type_map["best_query_start"] + condition_query + ''' order by likes_cnt desc  limit ''' + params["limit"] + list_type_map["best_query_end"]
+            return query
 
-            else :
-                category_list = ['category_type','category_context','category_ingredients']
-                subquery_name_list = ['c1', 'c2' , 'c3']
-                after_query = ''' where public = 1 '''   
+        elif params["order_by"] == "created_at" :
+            query = list_type_map["created_at_query_start"] + condition_query + ''' order by id desc  limit ''' + params["limit"] + list_type_map["created_at_query_end"]
+            return query
 
-                i = 0
-                for t in text_list:
-                    if t == "전체" :
-                        pass
-                    else :
-                        query = query + '''left join
-                                            (SELECT id FROM category 
-                                            where  FIELD(name, \"''' + t + '''\"  ) ) as '''+ subquery_name_list[i] + '''
-                                            on ''' + category_list[i] +''' = '''+ subquery_name_list[i]  + '''.id'''
-
-                        after_query = after_query + ''' and not ''' + subquery_name_list[i] + '''.id is null '''
-                    i = i + 1
-
-
-            if "target_id" in params:
-                query = query + " and id < " + params["target_id"] +  after_query     +  " limit 15;"
-                print (query)
-                return query
-            else :
-                query = query + after_query  +  " limit 15;"
-                print (query)
-                return query
 
     elif list_type == "search"  :
         pass
