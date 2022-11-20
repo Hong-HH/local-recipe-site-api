@@ -90,7 +90,7 @@ class UserRecipeResource(Resource) :
                             limit ''' + params["offset"] + ''' , ''' +  params["limit"] + ''' ) as rn
                             left join likes as l
                             on rn.id = l.recipe_id
-                            group by recipe_id
+                            group by rn.id
                             order by %s desc) as r
                             left join user_history as uh
                             on r.id = uh.recipe_id
