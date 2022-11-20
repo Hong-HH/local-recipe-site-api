@@ -16,6 +16,7 @@ from resources.register import UserRegisterResource
 from resources.recipe_list import RescipeListResource
 from resources.recipe import RescipeResource
 from resources.recipe_comment import RecipeCommentListResource, RecipeCommentResource
+from resources.user_info import UserLikeRecipeResource, UserRecipeResource, UserPurchaseResource
 
 
 app = Flask(__name__)
@@ -53,13 +54,22 @@ api = Api(app, errors=CUSTOM_ERRORS)
 
 # resources 와 연결
 
+# 로그인 관련
 api.add_resource(UserRegisterResource, '/v1/user/register')
 api.add_resource(UserLoginResource, '/v1/user/login')
 # api.add_resource(LogoutResource, '/v1/user/logout')
+
+# 레시피 관련
 api.add_resource(RescipeListResource, '/v1/recipe')
 api.add_resource(RescipeResource, '/v1/recipe/<int:recipe_id>')
 api.add_resource(RecipeCommentListResource, '/v1/recipe/<int:recipe_id>/comment')
 api.add_resource(RecipeCommentResource, '/v1/comment/<int:comment_id>')
+
+# 유저 정보 관련
+api.add_resource(UserRecipeResource, '/v1/user/recipe')
+api.add_resource(UserLikeRecipeResource,'/v1/user/likes' )
+api.add_resource(UserPurchaseResource, '/v1/user/purchase')
+
 
 
 
