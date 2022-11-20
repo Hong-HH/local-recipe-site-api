@@ -18,7 +18,7 @@ from functions_for_recipe import recipe_list_map, recipe_detail_query, get_categ
 
 
 
-class UserRecipeResource(Resource) :
+class LikeResource(Resource) :
 
     #  좋아요 추가
 
@@ -35,6 +35,7 @@ class UserRecipeResource(Resource) :
             external_type = params['external_type']
             token =  request.headers.get('Token') 
             id_result = get_external_id(external_type, token)
+            print(id_result)
 
             if id_result["status"] == 200 :
                 external_id = id_result["external_id"]
@@ -98,7 +99,7 @@ class UserRecipeResource(Resource) :
             else :
                 print('connection does not exist')
         return {'status' : 200, 'message' : "success" }, HTTPStatus.OK
-        
+
 
     def delete(self, recipe_id) :
         

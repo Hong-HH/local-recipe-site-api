@@ -17,6 +17,7 @@ from resources.recipe_list import RescipeListResource
 from resources.recipe import RescipeResource
 from resources.recipe_comment import RecipeCommentListResource, RecipeCommentResource
 from resources.user_info import UserLikeRecipeResource, UserRecipeResource, UserPurchaseResource
+from resources.likes import LikeResource
 
 
 app = Flask(__name__)
@@ -66,9 +67,13 @@ api.add_resource(RecipeCommentListResource, '/v1/recipe/<int:recipe_id>/comment'
 api.add_resource(RecipeCommentResource, '/v1/comment/<int:comment_id>')
 
 # 유저 정보 관련
-api.add_resource(UserRecipeResource, '/v1/user/recipe')
+api.add_resource(UserRecipeResource, '/v1/user/recipe')                              
 api.add_resource(UserLikeRecipeResource,'/v1/user/likes' )
 api.add_resource(UserPurchaseResource, '/v1/user/purchase')
+
+# 좋아요 추가/삭제
+api.add_resource(LikeResource, '/v1/like/<int:recipe_id>')
+
 
 
 
