@@ -40,6 +40,13 @@ class RescipeListResource(Resource) :
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
 
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        try :
+
             query = recipe_list_map(list_type, params) 
 
                 

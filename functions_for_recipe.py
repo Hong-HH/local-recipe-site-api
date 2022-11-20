@@ -30,6 +30,46 @@ def recipe_list_map (list_type, params) :
                                 on r.user_id = u.id ''',
 
 
+                        "created_at_query_start" : '''  select rr.* , u.nickname, u.profile_img, u.profile_desc
+                                                        from 
+                                                        (select r.* , count(uh.id) as views
+                                                        from 
+                                                        (select rc.* ,  count(l.created_at) as like_cnt
+                                                        from 
+                                                        (select *
+                                                        from recipe
+                                                        where recipe.public = 1 ''',
+                        "created_at_query_end" : ''' order by id desc
+                                                        limit 10) as rc
+                                                        left join likes as l
+                                                        on rc.id = l.recipe_id 
+                                                        group by rc.id) as r
+                                                        left join user_history as uh
+                                                        on r.id = uh.recipe_id
+                                                        group by r.id) as rr
+
+                                                        left join user as u
+                                                        on rr.user_id = u.id; ''',
+                        
+                        "best_query_start" : ''' select r.*, u.nickname, u.profile_img, u.profile_desc
+                                                from 
+                                                (select rl.*, count(uh.created_at) as views
+                                                from 
+                                                (select rn.*, count(l.created_at) as likes_cnt
+                                                from recipe rn
+                                                left join likes l
+                                                on rn.id = l.recipe_id
+                                                group by recipe_id
+                                                having public = 1  ''',
+                        "best_query_end" : '''  limit 2  
+                                                order by likes_cnt desc) as rl
+                                                left join user_history as uh
+                                                on rl.id = uh.recipe_id
+                                                group by recipe_id) as r
+                                                left join user as u
+                                                on r.user_id = u.id; '''
+
+
                         }
 
     if list_type == "best" :
