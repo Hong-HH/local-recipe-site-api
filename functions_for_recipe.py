@@ -108,20 +108,21 @@ def recipe_list_map (params, category_id_list, c_list) :
         query =  list_type_map["best_query_start"] +'''  order by likes_cnt desc limit ''' + str(10) + list_type_map["best_query_end"]
         
         return query
-    elif list_type == "classification"  :
-        # category_id_list, c_list
-        condition_query = ''' '''
 
-        if len(category_id_list) != 0 :
-            i = 0
-            for c in category_id_list :
-                print(c)
-                print(c_list)
-                condition_query = condition_query + ''' and ''' + c_list[i] + ''' = ''' + str(c["id"])
-                i = i + 1
-        
+    # category_id_list, c_list
+    condition_query = ''' '''
 
-        
+    if len(category_id_list) != 0 :
+        i = 0
+        for c in category_id_list :
+            print(c)
+            print(c_list)
+            condition_query = condition_query + ''' and ''' + c_list[i] + ''' = ''' + str(c["id"])
+            i = i + 1
+    
+
+    if list_type == "classification"  :
+
         if params["order_by"] == "like" :
 
             query = list_type_map["best_query_start"] + condition_query + ''' order by likes_cnt desc  limit ''' + params["offset"] + ''' , '''+ params["limit"] + list_type_map["best_query_end"]
@@ -133,8 +134,44 @@ def recipe_list_map (params, category_id_list, c_list) :
 
 
     elif list_type == "search"  :
-        pass
 
+        start_query = ''' select r.*, u.nickname, u.profile_img
+                            from 
+                            (select rl.*, count(uh.id) as views
+                            from 
+                            (select rnl.*, count(l.created_at) as likes_cnt
+                            from 
+                            (select rn.id, rn.user_id, rn.public, rn.header_title, rn.header_img, rn.created_at
+                            from recipe as rn  
+                            where '''
+
+        keyword_query = '''  '''
+
+        keyword_text = params["keyword"]
+        print(keyword_text)
+        keyword_list = keyword_text.split(" ")
+        i = 0
+        for keyword in keyword_list :
+            if i != 0 :
+                keyword_query = keyword_query + ''' and '''
+            word = keyword.strip()
+            keyword_query = keyword_query + ''' rn.header_title like  \"%''' + word + '''%\"  '''
+            i = i + 1
+
+        
+        end_query = ''' ) as rnl
+                        left join likes l
+                        on rnl.id = l.recipe_id
+                        group by rnl.id) as rl
+                        left join user_history as uh
+                        on rl.id = uh.recipe_id
+                        group by rl.id) as r
+                        left join user u 
+                        on r.user_id = u.id; '''
+
+        query = start_query + keyword_query + condition_query +  ''' limit ''' + params["offset"] + ''' , '''+ params["limit"] + end_query
+
+        return query
 
 
     return list_type_map[list_type]
