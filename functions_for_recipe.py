@@ -120,17 +120,15 @@ def recipe_list_map (params, category_id_list, c_list) :
                 condition_query = condition_query + ''' and ''' + c_list[i] + ''' = ''' + str(c["id"])
                 i = i + 1
         
-        if "target_id" in params:
-                condition_query = condition_query + ''' and id < ''' + params["target_id"] + ''' '''
 
         
         if params["order_by"] == "like" :
 
-            query = list_type_map["best_query_start"] + condition_query + ''' order by likes_cnt desc  limit ''' + params["limit"] + list_type_map["best_query_end"]
+            query = list_type_map["best_query_start"] + condition_query + ''' order by likes_cnt desc  limit ''' + params["offset"] + ''' , '''+ params["limit"] + list_type_map["best_query_end"]
             return query
 
         elif params["order_by"] == "created_at" :
-            query = list_type_map["created_at_query_start"] + condition_query + ''' order by id desc  limit ''' + params["limit"] + list_type_map["created_at_query_end"]
+            query = list_type_map["created_at_query_start"] + condition_query + ''' order by id desc  limit ''' +params["offset"] + ''' , '''+ params["limit"]  + list_type_map["created_at_query_end"]
             return query
 
 

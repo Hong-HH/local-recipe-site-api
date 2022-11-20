@@ -25,6 +25,7 @@ class RecipeCommentListResource(Resource) :
     def get(self, recipe_id) : 
 
         params = request.args.to_dict()
+        return_dict = {}
 
         try :       
             # 1. db 접속
@@ -62,13 +63,51 @@ class RecipeCommentListResource(Resource) :
             # select 문은 아래 내용이 필요하다.
             # 커서로 부터 실행한 결과 전부를 받아와라.
             record_list = cursor.fetchall()
+            return_list = []
             i = 0
             for record in record_list:
-                record_list[i]['created_at'] = record['created_at'].isoformat()
+                return_list.append({
+                                    "id": record["id"],
+                                    "content": record["comment"],
+                                    "createdAt": record["created_at"].isoformat(),
+                                    "writer": {
+                                        "nickname": record["nickname"],
+                                        "profile_img": record["profile_img"]
+                                                }
+                                    })
+
                 i = i + 1
 
-            print(record_list)
+            return_dict["rows"] = return_list
 
+
+
+        except Error as e :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        try :
+            if "target_id" in params :
+                pass
+            else : 
+                query = ''' select count(id) as cnt
+                            from recipe_comment
+                            where recipe_id = %s
+                            group by recipe_id; '''
+
+                record = (recipe_id,  )
+                cursor.execute(query, record)
+                # select 문은 아래 내용이 필요하다.
+                # 커서로 부터 실행한 결과 전부를 받아와라.
+                record_list = cursor.fetchall()
+                
+                return_dict["count"] = record_list[0]["cnt"]
+
+
+
+            
+            
 
 
         except Error as e :
@@ -84,7 +123,7 @@ class RecipeCommentListResource(Resource) :
                 print('MySQL connection is closed')
             else :
                 print('connection does not exist')
-        return {'status' : 200, 'message' :  "success" ,'list' : record_list }, HTTPStatus.OK
+        return {'status' : 200, 'message' :  "success" ,'comments' : return_dict }, HTTPStatus.OK
 
 
 
