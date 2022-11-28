@@ -1,7 +1,7 @@
 
 # recipe list request type 에 대한 query 문 매칭
 
-def get_categoru_query(params) :
+def get_category_query(params) :
     list_type = params["list_type"]
     category_list = ['category_type','category_context','category_ingredients']
     c_list = []

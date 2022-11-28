@@ -13,7 +13,7 @@ from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
 
-from functions_for_recipe import recipe_list_map, recipe_detail_query, get_categoru_query
+from functions_for_recipe import recipe_list_map, recipe_detail_query, get_category_query
 from functions_for_users import get_external_id, get_refresh_token
 
 
@@ -40,7 +40,7 @@ class RescipeListResource(Resource) :
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            result_list = get_categoru_query(params)
+            result_list = get_category_query(params)
             category_id_list = []
             c_list = []
             if result_list is not None :
