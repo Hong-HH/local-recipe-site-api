@@ -17,7 +17,7 @@ from functions_for_recipe import recipe_detail_query, get_category_query
 from functions_for_users import get_external_id, get_refresh_token
 
 
-class ClassResource(Resource) :
+class ClassListResource(Resource) :
     
     def get(self) : 
         # 파라미터 딕셔너리 형태로 가져오기
@@ -30,28 +30,60 @@ class ClassResource(Resource) :
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            result_list = get_category_query(params)
-            category_id_list = []
-            c_list = []
-            if result_list is not None :
-                query = result_list[0]
-                c_list = result_list[1]
-                cursor.execute(query)
-                # select 문은 아래 내용이 필요하다.
-                # 커서로 부터 실행한 결과 전부를 받아와라.
-                record_list = cursor.fetchall()
-                category_id_list = record_list
-                print(category_id_list)
-                # [{"id" : },{"id" :}]
 
         except Error as e :
             # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
             print('Error while connecting to MySQL', e)
             return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
+        # 카테고리 id get
         try :
+            category_name = params["list_type"]
+            if category_name == "전체" :
+                pass
 
-            query = recipe_list_map(params, category_id_list, c_list) 
+            else :
+                query = '''select id
+                            from category
+                            where name = "한식";''' 
+
+                record = params["list_type"]
+                cursor.execute(query, record)
+                # select 문은 아래 내용이 필요하다.
+                # 커서로 부터 실행한 결과 전부를 받아와라.
+                record_list = cursor.fetchall()
+                category_id = record_list[0]["id"]
+
+        except :
+            # 뒤의 e는 에러를 찍어라 error를 e로 저장했으니까!
+            print('Error while connecting to MySQL', e)
+            return {'status' : 500 ,'message' : str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+        # 클래스 리스트 가져오기 
+        try :
+            # todo offset 추가하기
+            query_1 = ''' select c2.*, c.header_img , c.header_title, CEILING(c.price * (1 - c.discount_percent)) as price, c.date_time
+                    from 
+                    (select c1.*, ifnull(count(ph.id), 0)  as participants
+                    from (SELECT id, maximum_participants , category
+                    FROM class
+                    where date_time > now() and post_start_date < now()'''
+                    
+            query_2 =''' order by date_time) as c1
+                    left join  class_purchase_history as ph
+                    on c1.id = ph.class_id
+                    group by c1.id
+                    having  maximum_participants > participants) as c2
+                    left join class as c
+                    on c2.id = c.id; '''
+
+            if category_name == "전체" :
+                query = query_1 + query_2
+
+            else : 
+                query = query_1 + ''' and category = ''' + str(category_id) + ''' ''' + query_2
+
             print(query)
             
             cursor.execute(query)

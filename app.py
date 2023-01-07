@@ -18,6 +18,7 @@ from resources.recipe import RescipeResource
 from resources.recipe_comment import RecipeCommentListResource, RecipeCommentResource
 from resources.user_info import UserLikeRecipeResource, UserRecipeResource, UserPurchaseResource
 from resources.likes import LikeResource
+from resources.class_list import ClassListResource
 
 
 app = Flask(__name__)
@@ -73,6 +74,9 @@ api.add_resource(UserPurchaseResource, '/v1/user/purchase')
 
 # 좋아요 추가/삭제
 api.add_resource(LikeResource, '/v1/like/<int:recipe_id>')
+
+# 클래스 관련
+api.add_resource(ClassListResource, '/v1/class')
 
 
 
