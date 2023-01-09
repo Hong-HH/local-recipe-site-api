@@ -14,7 +14,7 @@ from google.auth.transport import requests as google_requests
 
 
 from functions_for_users import get_external_id, get_refresh_token
-from functions_for_recipe import recipe_list_map, recipe_detail_query, get_categoru_query
+from functions_for_recipe import recipe_list_map, recipe_detail_query, get_category_query
 
 
 class UserRecipeResource(Resource) :

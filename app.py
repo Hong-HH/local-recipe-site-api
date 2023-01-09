@@ -5,6 +5,7 @@ from flask_jwt_extended import JWTManager
 from flask_jwt_extended.exceptions import RevokedTokenError
 from jwt.exceptions import ExpiredSignatureError
 from flask_cors import CORS 
+import logging
 
 
 from http import HTTPStatus
@@ -142,7 +143,7 @@ def google_login():
 
 
 
-
+logging.getLogger('flask_cors').level = logging.DEBUG
 
 
 
