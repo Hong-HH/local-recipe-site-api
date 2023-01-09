@@ -33,7 +33,17 @@ class ClassResource(Resource) :
             connection = get_connection()
             cursor = connection.cursor(dictionary = True)
             # 2. 해당 테이블, recipe 테이블에서 select
-            query = recipe_detail_query["recipe_user_info"]
+            query = ''' select c3.*, cg.name as category_name
+                        from (select c1.* ,  ifnull(count(cph.created_at), 0) as participants
+                        from 
+                        (select * 
+                        from class
+                        where id = 6
+                        ) as c1
+                        left join class_purchase_history as cph
+                        on c1.id = cph.class_id) as c3
+                        left join category as cg
+                        on c3.category = cg.id; '''
             record = (recipe_id, )
             cursor.execute(query, record)
             # select 문은 아래 내용이 필요하다.
@@ -41,21 +51,15 @@ class ClassResource(Resource) :
             record_list = cursor.fetchall()
             i = 0
             for record in record_list:
-                if record["result_img"] :
-                    result_img = record["result_img"]
-                else :
-                    result_img = record['mainSrc']
-
-                recipe = {"recipeId": record['id'],
-                            "title":record['title'],
-                            "mainSrc": record['mainSrc'],
-                            "intro": record['intro'],
-                            "writer":{ "id" : record['user_id'],"nickname," : record['nickname'], "profile_img" : record['profile_img'], "profile_desc" :record['profile_desc'] },
-                            "createdAt": record['created_at'].isoformat(),     
-                            "updatedAt": record['updated_at'].isoformat(),
-                            "category": [record['c_type'],record['c_ctx'],record['c_ind']],
-                            "details":  [record['c_s'],record['c_time'],record['c_level']],
-                            "resultSrc" : result_img
+                
+                recipe = {"id": record['id'],
+                            "header_img":record['title'],
+                            "header_title": record['mainSrc'],
+                            "header_desc": record['intro'],
+                            "price": record['created_at'].isoformat(),     
+                            "time_required": record['updated_at'].isoformat(),
+                            "date": [record['c_type'],record['c_ctx'],record['c_ind']],
+                            "details":  [record['c_s'],record['c_time'],record['c_level']]
                             }
                 print("i의 값은" + str(i))
                 i = i +1

@@ -22,6 +22,7 @@ from resources.class_list import ClassListResource
 
 
 app = Flask(__name__)
+#  CORS 에러 
 CORS(app) 
 
 # 환경 변수 세팅
