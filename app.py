@@ -24,7 +24,7 @@ from resources.class_list import ClassListResource
 
 app = Flask(__name__)
 #  CORS 에러 
-CORS(app) 
+CORS(app, resources={r"*": {"origins": "*"}})
 
 # 환경 변수 세팅
 app.config.from_object(Config)

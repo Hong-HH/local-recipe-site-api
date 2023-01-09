@@ -38,7 +38,7 @@ class ClassResource(Resource) :
                         from 
                         (select * 
                         from class
-                        where id = 6
+                        where id = %s
                         ) as c1
                         left join class_purchase_history as cph
                         on c1.id = cph.class_id) as c3
