@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect ,  json, Response
 from flask.json import jsonify
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
@@ -24,7 +24,7 @@ from resources.class_list import ClassListResource
 
 app = Flask(__name__)
 #  CORS 에러 
-CORS(app, resources={r"*": {"origins": "*"}})
+CORS(app, origins=["https://localhost:3000",  "https://myrecipetest.tk/" ], supports_credentials=True)
 
 # 환경 변수 세팅
 app.config.from_object(Config)
@@ -95,6 +95,24 @@ def hello_world():
 
         return "<p>Hello, World! Do Not Post Here!!!</p>"
 
+
+# 쿠키확인용2
+@app.route("/a")
+def hello_cookie():
+    if request.method =='GET':
+        print("상태 1 도달")
+        resp = Response(
+                        response=json.dumps({'status' : 200 , 
+                                            'message' : "success"}),
+                                status=200,
+                                mimetype="application/json"
+                                )
+        print("상태 2 도달")
+        print(resp)
+        print("상태 3 도달")
+        # 보내줄때 쿠키에 refresh 토큰
+        resp.set_cookie('Token', "test-token" )
+        return resp
 
 
 @app.route("/naver" )
