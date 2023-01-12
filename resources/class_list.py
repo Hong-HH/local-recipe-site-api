@@ -68,7 +68,8 @@ class ClassListResource(Resource) :
                     FROM class
                     where date_time > now() and post_start_date < now()'''
                     
-            query_2 =''' order by date_time) as c1
+            query_2 =''' order by date_time 
+                    limit ''' + params["offset"] + ''' , ''' +  params["limit"]  +  ''' ) as c1
                     left join  class_purchase_history as ph
                     on c1.id = ph.class_id
                     group by c1.id
