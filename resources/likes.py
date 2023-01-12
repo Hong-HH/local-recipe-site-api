@@ -33,7 +33,7 @@ class LikeResource(Resource) :
 
             # user_id get
             AuthType = request.headers.get("AuthType")
-            token =  request.headers.get('Token') 
+            token =  request.headers.get('Authorization') 
             id_result = get_external_id(AuthType, token)
             print(id_result)
 
@@ -112,7 +112,7 @@ class LikeResource(Resource) :
 
             # user_id get
             AuthType = request.headers.get("AuthType")
-            token =  request.headers.get('Token') 
+            token =  request.headers.get('Authorization') 
             id_result = get_external_id(AuthType, token)
 
             if id_result["status"] == 200 :

@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect ,  json, Response
+from flask import Flask, request, redirect
 from flask.json import jsonify
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
@@ -6,15 +6,10 @@ from flask_jwt_extended.exceptions import RevokedTokenError
 from jwt.exceptions import ExpiredSignatureError
 from flask_cors import CORS 
 import logging
-import requests
+
 
 from http import HTTPStatus
 from urllib import parse
-
-
-from google.oauth2 import id_token as id_token_module
-from google.auth.transport import requests as google_requests
-
 
 from config import Config
 from resources.login import UserLoginResource
@@ -28,18 +23,31 @@ from resources.class_list import ClassListResource
 from resources.class_detail import ClassResource
 
 
+from mysql_connection import get_connection
+from mysql.connector.errors import Error
+
+from config import Config
+
+
+from google.oauth2 import id_token as id_token_module
+from google.auth.transport import requests as google_requests
+
+
 from functions_for_users import check_user, get_naver_profile, refresh_naver_token
 
 
 
-app = Flask(__name__)
-#  CORS 에러 
-CORS(app, origins=["https://localhost:3000",  "https://myrecipetest.tk/" , "http://my-recipe-front.s3-website.ap-northeast-2.amazonaws.com"], supports_credentials=True)
+#  버전 체크
+import sys
+from platform import python_version
 
+
+app = Flask(__name__)
+
+CORS(app, origins=["https://localhost:3000",  "https://myrecipetest.tk/" , "http://my-recipe-front.s3-website.ap-northeast-2.amazonaws.com"], supports_credentials=True)
 
 # 환경 변수 세팅
 app.config.from_object(Config)
-
 
 # 로그아웃한 유저인지 확인하는 코드 
 # @jwt.token_in_blocklist_loader
@@ -96,25 +104,26 @@ api.add_resource(ClassResource, '/v1/class/<int:class_id>')
 
 
 
-
 # 연결확인용 
 @app.route("/" , methods=['POST','GET'])
 def hello_world():
     if request.method =='GET':
-        return "<p>Hello, World!</p>"
+        print(sys.version) 
+        print(python_version())
+        cooks =  request.cookies
+        print (cooks)
+        
+        return "Hello, World!" 
+
     else : 
 
         return "<p>Hello, World! Do Not Post Here!!!</p>"
 
 
 
-# cors 관련 디버그 로그
-logging.getLogger('flask_cors').level = logging.DEBUG
-
-
 @app.before_request
 def before_request() :
-    print(request)         #<Request 'http://127.0.0.1:5000/v1/class?list_type=전체&offset=0&limit=10' [GET]>
+    print(request)
     print(type(request))  # <class 'werkzeug.local.LocalProxy'>
     print(request.path)
 
@@ -126,7 +135,7 @@ def before_request() :
 
         print("토큰 유효성 검사 시작")
         AuthType = request.headers.get("AuthType")
-        token =  request.headers.get('Token') 
+        token =  request.headers.get('Authorization') 
 
         if AuthType == "naver" :
             profile_result = get_naver_profile(access_token)
@@ -143,10 +152,21 @@ def before_request() :
                     pass
                 else :
                     print("access token 발급에 문제 발생")
-                    return {"status" : 500 , 'message' : "access token 발급에 문제 발생, 재로그인 필요"}
+                    return {"status" : 500 , 'message' : "access token 발급에 문제 발생, 재로그인 필요"}, 500
 
         elif AuthType == "google" :
-            try:                
+            print(token)
+ 
+            # split_text = token.split(' ')
+            # token = split_text[-1]
+            token = token[7:]
+
+            print(token)
+
+            # 2. id 토큰 유효성 검사
+            #  공식문서 : https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
+            try:
+                # Specify the CLIENT_ID of the app that accesses the backend:               
                 id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
 
             except ValueError:
@@ -157,12 +177,12 @@ def before_request() :
 
 
                 # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
-                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김, 재로그인 필요"}
+                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김, 재로그인 필요"}, 500
 
 
-            
 
 
+logging.getLogger('flask_cors').level = logging.DEBUG
 
 
 @app.after_request
@@ -171,7 +191,6 @@ def after_request(response):
   response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE, OPTIONS')
   response.headers.add('Vary', 'Origin')
   return response
-
 
 if __name__ == "__main__" :
     app.run()

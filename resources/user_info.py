@@ -33,7 +33,7 @@ class UserRecipeResource(Resource) :
             # user_id get
             # 4. 유저 인증 과정 거쳐서 유저 id 겟
             AuthType = request.headers.get("AuthType")
-            token =  request.headers.get('Token') 
+            token =  request.headers.get('Authorization') 
             id_result = get_external_id(AuthType, token)
 
             if id_result["status"] == 200 :
@@ -153,7 +153,7 @@ class UserLikeRecipeResource(Resource) :
             # user_id get
             # 4. 유저 인증 과정 거쳐서 유저 id 겟
             AuthType = request.headers.get("AuthType")
-            token =  request.headers.get('Token') 
+            token =  request.headers.get('Authorization') 
             id_result = get_external_id(AuthType, token)
 
             if id_result["status"] == 200 :

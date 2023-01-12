@@ -26,6 +26,7 @@ class UserLoginResource(Resource) :
     def post(self) : 
         # 헤더에서 AuthType 가져오기
         AuthType = request.headers.get("AuthType")
+        print("post methon 시작")
 
         # 네이버로 로그인을 하였을  때
         if AuthType == "naver" :
@@ -51,7 +52,7 @@ class UserLoginResource(Resource) :
                 # 2-1. access_token 없으면 access_token 발급
                 else :
                     # 2-1. access_token 있으면 변수에 저장
-                    access_token =  request.headers.get('Token') 
+                    access_token =  request.headers.get('Authorization') 
                     refresh_token = request.cookies.get('refresh_token')
                     
 
@@ -71,14 +72,14 @@ class UserLoginResource(Resource) :
                         profile_info = profile_result["profile_info"]
                     else :
                         print("access token 발급에 문제 발생")
-                        return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
+                        return {"status" : 500 , 'message' : "access token 발급에 문제 발생"} , 500
 
                 # db에 등록된 유저인지 체크
                 check_result = check_user(cursor, "naver", profile_info["id"])
 
                 if check_result["status"] == 200 :
                     # db에 유저가 있음 --> 로그인 결과 리턴
-                    return {'status' : 200 , 'message' : "success", 'userInfo': [check_result["userInfo"]["nickname"], check_result["userInfo"]["email"]]} 
+                    return {'status' : 200 , 'message' : "success", 'userInfo': [check_result["userInfo"]["nickname"], check_result["userInfo"]["email"]]} , 200
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
 
@@ -98,12 +99,12 @@ class UserLoginResource(Resource) :
                     return resp
     
                 else :
-                    return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} 
+                    return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} , 500
 
             except Error as e:
                 print('Error', e)
 
-                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
+                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} , 500
 
             # finally는 필수는 아니다.
             finally :
@@ -120,15 +121,19 @@ class UserLoginResource(Resource) :
         elif  AuthType == "google" :
             # 1. 클라이언트로부터 헤더에 있는 id 토큰 정보를 받아온다.
             # werkzeug.datastructures.EnvironHeaders 에 대한 설명 링크 참고  (https://tedboy.github.io/flask/generated/generated/werkzeug.EnvironHeaders.html)
-            id_token =  request.headers.get('Token') 
+            id_token =  request.headers.get('Authorization') 
+            split_text = id_token.split(' ')
+            token = split_text[-1]
 
-            print(id_token)
+            print(token)
 
             # 2. id 토큰 유효성 검사
             #  공식문서 : https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
             try:
                 # Specify the CLIENT_ID of the app that accesses the backend:
-                id_info = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+                split_text = token.split(' ')
+                token = split_text[-1]
+                id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
 
             except ValueError:
                 # Invalid token
@@ -158,7 +163,7 @@ class UserLoginResource(Resource) :
                 else :    
                     # 4-1. 회원가입이 되어있지 않다면 회원가입이 필요하다는 메세지를 리턴해준다.
                     userInfo = [id_info["name"], id_info["email"] ]
-                    return {'status' : 400 , 'message' : "go_register", "userInfo" : userInfo } 
+                    return {'status' : 202 , 'message' : "go_register", "userInfo" : userInfo } , 202
 
 
             except Error as e:
@@ -175,61 +180,4 @@ class UserLoginResource(Resource) :
                 else :
                     print('MySQL connection failed connect')
 
-
-    # 유기적인 서버와 클라이언트 테스트를 위해 
-    # 임시로 app.py에서 코드 값을 받을 수 있는 path 추가함. 
-    # code 를 얻는 path : "/naver", "/google"   
-    # redirect(url) 로 각 플랫폼의 로그인 승인 페이지로 이동 --> redirect url 로 설정한 페이지 (v1/user/login) 로 이동됨
-
-    # def get(self) : 
-    #     # 구글과 네이버를 가르는 분기문
-    #     state = request.args.get('state')
-
-    #     print(request.args.to_dict())
-
-
-    #     if state  :
-
-    #         code = request.args.get('code')
-
-    #         # 테스트를 위해 code, state 값은 반환하는 리턴문
-    #         # return {"code" : code, "state": state}
-
-    #         # 함수를 사용하여 access_token, refresh_token를 받는다.
-    #         token_result = get_naver_token(code, state)
-    #         access_token = token_result["access_token"]
-    #         refresh_token = token_result["refresh_token"]
-    #         return {'status' : 200, 'access_token' : access_token, "refresh_token" : refresh_token}
-
-
-    #     elif state is None :
-    #         print("state is None")
-    #         print("so this is google login")
-
-    #         code = request.args.get('code')
-    #         client_id = Config.GOOGLE_LOGIN_CLIENT_ID
-    #         client_secret = Config.GOOGLE_LOGIN_CLIENT_SECRET
-    #         redirect_uri =  Config.LOCAL_URL + "v1/user/login"
-            
-    #         url = Config.GOOGLE_TOKEN_UTL
-    #         url = url + "grant_type=authorization_code"
-    #         url = url + "&client_id="+ client_id +"&client_secret="+ client_secret +"&code=" + code +"&redirect_uri=" + redirect_uri
-
-    #         # header = {'Content-type': 'application/x-www-form-urlencoded'}
-
-    #         print(url)
-    #         # , headers=header
-
-    #         login_result = requests.post(url).json()
-    #         print(login_result)
-
-    #         id_token = login_result['id_token']
-    #         print("id token 의 type")
-    #         print(type(id_token))
-    #         print("id token         :")
-    #         print(id_token)
-
-    #         # id 토큰을 얻기위한 임시 
-
-    #         return {"message" : id_token}
 

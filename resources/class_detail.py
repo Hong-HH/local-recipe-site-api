@@ -154,7 +154,7 @@ class ClassResource(Resource) :
             if "AuthType" in request.headers:
                 # 헤더에서 AuthType 가져오기
                 AuthType = request.headers.get("AuthType")
-                token =  request.headers.get('Token') 
+                token =  request.headers.get('Authorization') 
 
                 id_result = get_external_id(AuthType, token)
 
