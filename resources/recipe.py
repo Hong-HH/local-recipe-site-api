@@ -156,12 +156,12 @@ class RescipeResource(Resource) :
 
         # 유저가 로그인을 했다면 ... 좋아요 여부 리턴
         try :            
-            if "external_type" in params:
-                # 파라미터에서 external_type 가져오기
-                external_type = request.args.get('external_type')
+            if "AuthType" in request.headers :
+                # 헤더에서 AuthType 가져오기
+                AuthType = request.headers.get("AuthType")
                 token =  request.headers.get('Token') 
 
-                id_result = get_external_id(external_type, token)
+                id_result = get_external_id(AuthType, token)
 
                 if id_result["status"] == 200 :
                     external_id = id_result["external_id"]
@@ -213,7 +213,7 @@ class RescipeResource(Resource) :
         try :
             # 2. 해당 테이블, recipe 테이블에서 select
             query = recipe_detail_query["add_view"]
-            if "external_type" in params :
+            if "AuthType" in request.headers :
               record = (user_id, recipe_id)
             else :
               record = (14, recipe_id)
