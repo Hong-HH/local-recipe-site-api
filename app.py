@@ -88,7 +88,6 @@ api.add_resource(ClassResource, '/v1/class/<int:class_id>')
 
 
 
-
 # 연결확인용 
 @app.route("/" , methods=['POST','GET'])
 def hello_world():
@@ -99,71 +98,8 @@ def hello_world():
         return "<p>Hello, World! Do Not Post Here!!!</p>"
 
 
-# 쿠키확인용2
-@app.route("/a")
-def hello_cookie():
-    if request.method =='GET':
-        print("상태 1 도달")
-        resp = Response(
-                        response=json.dumps({'status' : 200 , 
-                                            'message' : "success"}),
-                                status=200,
-                                mimetype="application/json"
-                                )
-        print("상태 2 도달")
-        print(resp)
-        print("상태 3 도달")
-        # 보내줄때 쿠키에 refresh 토큰
-        resp.set_cookie('Token', "test-token" )
-        return resp
 
-
-@app.route("/naver" )
-def naver_login():
-    #  code 획득을 위한 임시 프론트
-      
-    client_id = Config.NAVER_LOGIN_CLIENT_ID
-    redirect_uri = Config.LOCAL_URL + "v1/user/login"
-    state = parse.quote('no_error_plz')
-    print(state)
-
-
-    url = "https://nid.naver.com/oauth2.0/authorize?"
-    url = url + "response_type=code"
-    url = url + "&client_id=" + client_id
-    url = url + "&redirect_uri="+redirect_uri 
-    url = url + "&state=" +  state
-    
-    
-    
-    print(url)
-
-    return redirect(url)
-
-
-
-@app.route("/google" )
-def google_login():
-    #  code 획득을 위한 임시 프론트
-
-
-    client_id = Config.GOOGLE_LOGIN_CLIENT_ID
-    redirect_uri =  Config.LOCAL_URL + "v1/user/login"
-    
-    # 값이 부족하다면 &scope=profile 로 값을 변경해보자. 현재는 &scope=https://www.googleapis.com/auth/userinfo.profile
-    # scope=openid%20profile%20email
-
-    url = Config.GOOGLE_LOGIN_CODE
-    url = url + "response_type=code" + "&access_type=offline&" + "&scope=openid%20profile%20email"
-    url = url + "&client_id=" + client_id + "&redirect_uri=" + redirect_uri
-
-    print("url      :")
-    print(url)
-
-    return redirect(url)
-
-
-
+# cors 관련 디버그 로그
 logging.getLogger('flask_cors').level = logging.DEBUG
 
 
