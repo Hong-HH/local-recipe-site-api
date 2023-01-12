@@ -99,10 +99,22 @@ class UserRegisterResource(Resource) :
 
                         # db에 유저가 있을시 회원가입 결과 리턴
                         if check_result["status"] == 200 :
-                            return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} , 200
+                            resp = Response(
+                                response=json.dumps({  'status' : 200 , 
+                                                    'message' : "success", 
+                                                    "userInfo": check_result["userInfo"], 
+                                                    }),
+                                        status=202,
+                                        mimetype="application/json"
+                                        )
 
-                        else :
-                            return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} , 500
+                        # 보내줄때 쿠키에 refresh 토큰
+                        resp.set_cookie('refresh_token', refresh_token )
+                        return resp, 200
+
+
+                    else :
+                        return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} , 500
 
 
 
@@ -195,7 +207,7 @@ class UserRegisterResource(Resource) :
 
                         # db에 유저가 있을시로그인 결과 리턴
                         if check_result["status"] == 200 :
-                            return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} , 200
+                            return {'status' : 200 , 'message' : "success", "userInfo": check_result["userInfo"]} , 200
 
                         else :
                             return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."}  , 500

@@ -79,7 +79,20 @@ class UserLoginResource(Resource) :
 
                 if check_result["status"] == 200 :
                     # db에 유저가 있음 --> 로그인 결과 리턴
-                    return {'status' : 200 , 'message' : "success", 'userInfo': check_result["userInfo"]} , 200
+                    resp = Response(
+                        response=json.dumps({ 'status' : 200 , 
+                                            'message' : "success", 
+                                            "userInfo": userInfo, 
+                                            "token": access_token
+                                            }),
+                                status=200,
+                                mimetype="application/json"
+                                )
+
+                    # 보내줄때 쿠키에 refresh 토큰
+                    resp.set_cookie('refresh_token', refresh_token )
+                    return resp, 200
+                    
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
 
