@@ -32,9 +32,9 @@ class LikeResource(Resource) :
             cursor = connection.cursor(dictionary = True)
 
             # user_id get
-            external_type = params['external_type']
+            AuthType = request.headers.get("AuthType")
             token =  request.headers.get('Token') 
-            id_result = get_external_id(external_type, token)
+            id_result = get_external_id(AuthType, token)
             print(id_result)
 
             if id_result["status"] == 200 :
@@ -42,11 +42,11 @@ class LikeResource(Resource) :
 
             else :
                 # 나중에 통합한 토큰 재발급 함수 추가
-                if external_type == "naver" :
+                if AuthType == "naver" :
                     refresh_token = request.cookies.get('refresh_token')
-                    token = get_refresh_token(external_type, refresh_token )
+                    token = get_refresh_token(AuthType, refresh_token )
                     #  다시한번 유저 인증 과정 거쳐서 유저 id 겟 시도
-                    id_result = get_external_id(external_type, token)
+                    id_result = get_external_id(AuthType, token)
                     if id_result["status"] == 200 :
                         external_id = id_result["external_id"]
 
@@ -54,7 +54,7 @@ class LikeResource(Resource) :
                         return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
 
 
-                elif external_type == "google" :
+                elif AuthType == "google" :
                      {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
 
                 print("토큰 만료")
@@ -111,20 +111,20 @@ class LikeResource(Resource) :
             cursor = connection.cursor(dictionary = True)
 
             # user_id get
-            external_type = params['external_type']
+            AuthType = request.headers.get("AuthType")
             token =  request.headers.get('Token') 
-            id_result = get_external_id(external_type, token)
+            id_result = get_external_id(AuthType, token)
 
             if id_result["status"] == 200 :
                 external_id = id_result["external_id"]
 
             else :
                 # 나중에 통합한 토큰 재발급 함수 추가
-                if external_type == "naver" :
+                if AuthType == "naver" :
                     refresh_token = request.cookies.get('refresh_token')
-                    token = get_refresh_token(external_type, refresh_token )
+                    token = get_refresh_token(AuthType, refresh_token )
                     #  다시한번 유저 인증 과정 거쳐서 유저 id 겟 시도
-                    id_result = get_external_id(external_type, token)
+                    id_result = get_external_id(AuthType, token)
                     if id_result["status"] == 200 :
                         external_id = id_result["external_id"]
 
@@ -132,7 +132,7 @@ class LikeResource(Resource) :
                         return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
 
 
-                elif external_type == "google" :
+                elif AuthType == "google" :
                      {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
 
                 print("토큰 만료")
