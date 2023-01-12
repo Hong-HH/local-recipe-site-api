@@ -6,10 +6,15 @@ from flask_jwt_extended.exceptions import RevokedTokenError
 from jwt.exceptions import ExpiredSignatureError
 from flask_cors import CORS 
 import logging
-
+import requests
 
 from http import HTTPStatus
 from urllib import parse
+
+
+from google.oauth2 import id_token as id_token_module
+from google.auth.transport import requests as google_requests
+
 
 from config import Config
 from resources.login import UserLoginResource
@@ -21,6 +26,10 @@ from resources.user_info import UserLikeRecipeResource, UserRecipeResource, User
 from resources.likes import LikeResource
 from resources.class_list import ClassListResource
 from resources.class_detail import ClassResource
+
+
+from functions_for_users import check_user, get_naver_profile, refresh_naver_token
+
 
 
 app = Flask(__name__)
@@ -101,6 +110,59 @@ def hello_world():
 
 # cors 관련 디버그 로그
 logging.getLogger('flask_cors').level = logging.DEBUG
+
+
+@app.before_request
+def before_request() :
+    print(request)
+    print(type(request))  # <class 'werkzeug.local.LocalProxy'>
+    print(request.path)
+
+    if request.path == '/v1/user/register' :
+        pass  
+
+    # token 의 유효성 체크
+    elif "AuthType" in request.headers:
+
+        print("토큰 유효성 검사 시작")
+        AuthType = request.headers.get("AuthType")
+        token =  request.headers.get('Token') 
+
+        if AuthType == "naver" :
+            profile_result = get_naver_profile(access_token)
+
+            if profile_result["result_code"] == "00" :
+                pass
+            else :
+                # 토큰이 유효하지 않음으로 재발급 후 재검사
+                refresh_token = request.cookies.get('refresh_token')
+                access_token = refresh_naver_token(refresh_token)
+                profile_result = get_naver_profile(access_token)
+
+                if profile_result["result_code"] == "00" :
+                    pass
+                else :
+                    print("access token 발급에 문제 발생")
+                    return {"status" : 500 , 'message' : "access token 발급에 문제 발생, 재로그인 필요"}
+
+        elif AuthType == "google" :
+            try:                
+                id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+
+            except ValueError:
+                # Invalid token
+                print("Invalid token")
+
+                # todo 만약 id_token 이 만료되었다면 재발급
+
+
+                # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
+                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김, 재로그인 필요"}
+
+
+            
+
+
 
 
 @app.after_request

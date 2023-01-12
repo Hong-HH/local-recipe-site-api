@@ -24,11 +24,11 @@ from functions_for_users import check_user, get_naver_token, get_naver_profile, 
 class UserLoginResource(Resource) :
     
     def post(self) : 
-        # 파라미터에서 external_type 가져오기
-        external_type = request.args.get('external_type')
+        # 헤더에서 AuthType 가져오기
+        AuthType = request.headers.get("AuthType")
 
         # 네이버로 로그인을 하였을  때
-        if external_type == "naver" :
+        if AuthType == "naver" :
             # 1-1. 클라이언트로부터 정보를 받아온다.
             data = request.get_json()
             # 1-2. DB에 연결
@@ -117,7 +117,7 @@ class UserLoginResource(Resource) :
 
 
         # 구글로 로그인을 하였을 때
-        elif  external_type == "google" :
+        elif  AuthType == "google" :
             # 1. 클라이언트로부터 헤더에 있는 id 토큰 정보를 받아온다.
             # werkzeug.datastructures.EnvironHeaders 에 대한 설명 링크 참고  (https://tedboy.github.io/flask/generated/generated/werkzeug.EnvironHeaders.html)
             id_token =  request.headers.get('Token') 
@@ -181,55 +181,55 @@ class UserLoginResource(Resource) :
     # code 를 얻는 path : "/naver", "/google"   
     # redirect(url) 로 각 플랫폼의 로그인 승인 페이지로 이동 --> redirect url 로 설정한 페이지 (v1/user/login) 로 이동됨
 
-    def get(self) : 
-        # 구글과 네이버를 가르는 분기문
-        state = request.args.get('state')
+    # def get(self) : 
+    #     # 구글과 네이버를 가르는 분기문
+    #     state = request.args.get('state')
 
-        print(request.args.to_dict())
-
-
-        if state  :
-
-            code = request.args.get('code')
-
-            # 테스트를 위해 code, state 값은 반환하는 리턴문
-            # return {"code" : code, "state": state}
-
-            # 함수를 사용하여 access_token, refresh_token를 받는다.
-            token_result = get_naver_token(code, state)
-            access_token = token_result["access_token"]
-            refresh_token = token_result["refresh_token"]
-            return {'status' : 200, 'access_token' : access_token, "refresh_token" : refresh_token}
+    #     print(request.args.to_dict())
 
 
-        elif state is None :
-            print("state is None")
-            print("so this is google login")
+    #     if state  :
 
-            code = request.args.get('code')
-            client_id = Config.GOOGLE_LOGIN_CLIENT_ID
-            client_secret = Config.GOOGLE_LOGIN_CLIENT_SECRET
-            redirect_uri =  Config.LOCAL_URL + "v1/user/login"
+    #         code = request.args.get('code')
+
+    #         # 테스트를 위해 code, state 값은 반환하는 리턴문
+    #         # return {"code" : code, "state": state}
+
+    #         # 함수를 사용하여 access_token, refresh_token를 받는다.
+    #         token_result = get_naver_token(code, state)
+    #         access_token = token_result["access_token"]
+    #         refresh_token = token_result["refresh_token"]
+    #         return {'status' : 200, 'access_token' : access_token, "refresh_token" : refresh_token}
+
+
+    #     elif state is None :
+    #         print("state is None")
+    #         print("so this is google login")
+
+    #         code = request.args.get('code')
+    #         client_id = Config.GOOGLE_LOGIN_CLIENT_ID
+    #         client_secret = Config.GOOGLE_LOGIN_CLIENT_SECRET
+    #         redirect_uri =  Config.LOCAL_URL + "v1/user/login"
             
-            url = Config.GOOGLE_TOKEN_UTL
-            url = url + "grant_type=authorization_code"
-            url = url + "&client_id="+ client_id +"&client_secret="+ client_secret +"&code=" + code +"&redirect_uri=" + redirect_uri
+    #         url = Config.GOOGLE_TOKEN_UTL
+    #         url = url + "grant_type=authorization_code"
+    #         url = url + "&client_id="+ client_id +"&client_secret="+ client_secret +"&code=" + code +"&redirect_uri=" + redirect_uri
 
-            # header = {'Content-type': 'application/x-www-form-urlencoded'}
+    #         # header = {'Content-type': 'application/x-www-form-urlencoded'}
 
-            print(url)
-            # , headers=header
+    #         print(url)
+    #         # , headers=header
 
-            login_result = requests.post(url).json()
-            print(login_result)
+    #         login_result = requests.post(url).json()
+    #         print(login_result)
 
-            id_token = login_result['id_token']
-            print("id token 의 type")
-            print(type(id_token))
-            print("id token         :")
-            print(id_token)
+    #         id_token = login_result['id_token']
+    #         print("id token 의 type")
+    #         print(type(id_token))
+    #         print("id token         :")
+    #         print(id_token)
 
-            # id 토큰을 얻기위한 임시 
+    #         # id 토큰을 얻기위한 임시 
 
-            return {"message" : id_token}
+    #         return {"message" : id_token}
 
