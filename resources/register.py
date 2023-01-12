@@ -20,13 +20,13 @@ from functions_for_users import check_user, get_naver_token, get_naver_profile, 
 class UserRegisterResource(Resource) :
     
     def post(self) : 
-        # 파라미터에서 external_type 가져오기
-        external_type = request.args.get('external_type')
+         # 헤더에서 AuthType 가져오기
+        AuthType = request.headers.get("AuthType")
 
         # 네이버로 로그인을 하였을  때
         # 회원가입을 했는지 여부를 구분하는 것은 code, state 가 아니다. --> 코드 수정 필요
 
-        if external_type == "naver" :
+        if AuthType == "naver" :
             # request 의 body 에서 code 와 state 값 받기
             # 1-1. 클라이언트로부터 정보를 받아온다.
             data = request.get_json()
@@ -142,7 +142,7 @@ class UserRegisterResource(Resource) :
             
         
         # 구글로 회원가입을 하였을 때
-        elif  external_type == "google" :
+        elif  AuthType == "google" :
             id_token =  request.headers.get('Token') 
             print(id_token)
 
