@@ -25,7 +25,8 @@ from resources.class_detail import ClassResource
 
 app = Flask(__name__)
 #  CORS 에러 
-CORS(app, origins=["https://localhost:3000",  "https://myrecipetest.tk/" ], supports_credentials=True)
+CORS(app, origins=["https://localhost:3000",  "https://myrecipetest.tk/" , "http://my-recipe-front.s3-website.ap-northeast-2.amazonaws.com"], supports_credentials=True)
+
 
 # 환경 변수 세팅
 app.config.from_object(Config)
@@ -166,6 +167,12 @@ def google_login():
 logging.getLogger('flask_cors').level = logging.DEBUG
 
 
+@app.after_request
+def after_request(response):
+  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Authtype')
+  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE, OPTIONS')
+  response.headers.add('Vary', 'Origin')
+  return response
 
 
 if __name__ == "__main__" :
