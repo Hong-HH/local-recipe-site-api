@@ -26,9 +26,6 @@ class ClassResource(Resource) :
 
         start_time = time.time()
         params = request.args.to_dict()
-        # 파라미터에서 external_type 가져오기
-        # external_type = request.args.get('external_type')
-
 
         try :       
             # 1. db 접속
@@ -155,11 +152,11 @@ class ClassResource(Resource) :
         try :
             print("AuthType 진입")            
             if "AuthType" in request.headers:
-                # 파라미터에서 external_type 가져오기
-                external_type = request.args.get('external_type')
+                # 헤더에서 AuthType 가져오기
+                AuthType = request.headers.get("AuthType")
                 token =  request.headers.get('Token') 
 
-                id_result = get_external_id(external_type, token)
+                id_result = get_external_id(AuthType, token)
 
                 if id_result["status"] == 200 :
                     external_id = id_result["external_id"]
