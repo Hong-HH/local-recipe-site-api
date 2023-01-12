@@ -114,7 +114,7 @@ logging.getLogger('flask_cors').level = logging.DEBUG
 
 @app.before_request
 def before_request() :
-    print(request)
+    print(request)         #<Request 'http://127.0.0.1:5000/v1/class?list_type=전체&offset=0&limit=10' [GET]>
     print(type(request))  # <class 'werkzeug.local.LocalProxy'>
     print(request.path)
 
