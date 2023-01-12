@@ -20,8 +20,15 @@ from functions_for_users import check_user, get_naver_token, get_naver_profile, 
 class UserRegisterResource(Resource) :
     
     def post(self) : 
-         # 헤더에서 AuthType 가져오기
-        AuthType = request.headers.get("AuthType")
+        print("회원가입 시작")
+         # 바디에서 AuthType 가져오기
+        data = request.get_json()
+        AuthType = data["external_type"]
+
+        if AuthType is None :
+            print("필수요소 없음")
+            return {'status' : 400 , 'message' : "external_type 누락"}  , 400
+
 
         # 네이버로 로그인을 하였을  때
         # 회원가입을 했는지 여부를 구분하는 것은 code, state 가 아니다. --> 코드 수정 필요
@@ -29,7 +36,7 @@ class UserRegisterResource(Resource) :
         if AuthType == "naver" :
             # request 의 body 에서 code 와 state 값 받기
             # 1-1. 클라이언트로부터 정보를 받아온다.
-            data = request.get_json()
+            
             print("회원가입 절차 시작")
 
             # 엑세스 토큰 확인
@@ -78,7 +85,7 @@ class UserRegisterResource(Resource) :
                                     values
                                     ("naver",%s,%s, %s, %s);'''
                                                         
-                            param = (profile_info["id"], data["email"],data["nickname"],data["profile_img"],data["profile_desc"] )
+                            param = (profile_info["id"], data["email"],data["nickname"],profile_info["profile_img"],profile_info["profile_desc"] )
                             
                             # 쿼리문을 커서에 넣어서 실행한다.
                             cursor.execute(query, param)
@@ -144,12 +151,14 @@ class UserRegisterResource(Resource) :
 
             # 바디에서 수정한 정보들 받기 
             data = request.get_json()
+            print(data)
 
             # 2. id 토큰 유효성 검사
             #  공식문서 : https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
             try:
                 # Specify the CLIENT_ID of the app that accesses the backend:
-                id_info = id_token_module.verify_oauth2_token(id_token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+                id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
+                print("유효한 토큰입니다.")
 
             except ValueError:
                 # Invalid token
@@ -179,14 +188,15 @@ class UserRegisterResource(Resource) :
                     # 이메일 키가 바디에 있다면, 이는 이미 유저에 대한 정보를 한 번 보내 
                     # 수정된 정보를 담고 있는 것이기에 바로 db 저장
                     if "email" in data :
+                        print("email 확인 중")
                         try :
                             print("회원 등록 중")
                             query = '''insert into user
-                                    (external_type ,external_id, email, nickname, profile_img, profile_desc)
+                                    (external_type ,external_id, email, nickname, profile_img)
                                     values
                                     ("google",%s,%s, %s, %s);'''
                                                         
-                            param = (id_info["sub"], data["email"],data["nickname"],data["profile_img"],data["profile_desc"] )
+                            param = (id_info["sub"], data["email"],data["nickname"],id_info["picture"])
                             
                             # 쿼리문을 커서에 넣어서 실행한다.
                             cursor.execute(query, param)
@@ -216,7 +226,7 @@ class UserRegisterResource(Resource) :
 
             except Error as e:
                 print('Error', e)
-                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
+                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} , 500
 
             # finally는 필수는 아니다.
             finally :

@@ -32,6 +32,8 @@ def get_external_id(external_type, token) :
 
     elif external_type == "google" :
         try:
+            split_text = token.split(' ')
+            token = split_text[-1]
             # Specify the CLIENT_ID of the app that accesses the backend:
             id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
             print({"status" : 200 , 'message' : "success", 'external_id' : id_info["sub"] , 'user_info' : id_info })
@@ -90,7 +92,7 @@ def check_user(cursor, external_type,external_id) :
 
     try :
         print("회원가입 확인중")
-        query = '''SELECT  email, nickname, profile_img, profile_desc, external_type ,created_at as createdAt, updated_at as updatedAt
+        query = '''SELECT  email, nickname, profile_img, profile_desc, created_at 
                     FROM user
                     where external_type = %s
                     and external_id = %s;'''
@@ -111,12 +113,12 @@ def check_user(cursor, external_type,external_id) :
             ### 문자열로 바꿔준다.
             i = 0
             for record in record_list:
-                record_list[i]['createdAt'] = record['createdAt'].isoformat()
-                record_list[i]['updatedAt'] = record['updatedAt'].isoformat()
+                record_list[i]['created_at'] = record['created_at'].isoformat()
                 i = i + 1
             return {'status' : 200, 'message' : "회원입니다.","userInfo":record_list[0]}
 
         else :
+            print("회원이 아닌 유저")
             return {'status' : 400, 'message' : "회원이 아닙니다."}
 
     # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
@@ -154,7 +156,7 @@ def get_naver_token (code, state) :
 
 def get_naver_profile(access_token) :
 
-    header = {"Authorization" :  access_token}
+    header = {"Authorization" : "Bearer " + access_token}
 
     profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
 

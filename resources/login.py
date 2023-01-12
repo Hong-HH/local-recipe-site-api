@@ -171,13 +171,16 @@ class UserLoginResource(Resource) :
                 # 3-2. 회원가입 되어있는지 확인
                 check_result = check_user(cursor, "google", id_info["sub"])
 
+                print(check_result["status"])
+
                 # 3-3. db에 유저가 있을시 로그인 결과 리턴
                 if check_result["status"] == 200 :
-                    
+                    print("회원가입이 되어있습니다.")
                     return {'status' : 200 , 'message' : "success", "userInfo": check_result["userInfo"] } , 200
 
                 else :    
                     # 4-1. 회원가입이 되어있지 않다면 회원가입이 필요하다는 메세지를 리턴해준다.
+                    print("회원가입이 되어있지 않습니다.")
                     userInfo = { "nickname" : id_info["name"], "email" : id_info["email"] , "external_type": AuthType }
                     return { "isRegistered": False, 'status' : 202 , 'message' : "go_register", "userInfo" : userInfo } , 202
 
