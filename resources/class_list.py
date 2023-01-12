@@ -13,8 +13,6 @@ from config import Config
 from google.oauth2 import id_token as id_token_module
 from google.auth.transport import requests as google_requests
 
-from functions_for_recipe import recipe_detail_query, get_category_query
-from functions_for_users import get_external_id, get_refresh_token
 
 
 class ClassListResource(Resource) :
@@ -95,14 +93,13 @@ class ClassListResource(Resource) :
             i = 0
             for record in record_list:
                 # record_list[i]['created_at'] = record['created_at'].isoformat()
-                recipe = {"recipe_id": record['id'],
-                            "like": record['likes_cnt'],
-                            "view": record['views'],
-                            "userInfo":[record['profile_img'], record['nickname']],
-                            "public": record['public'],
+                recipe = {"class_id": record['id'],
                             "src": record['header_img'],
                             "title":record['header_title'],
-                            "created_at": record['created_at'].isoformat()}
+                            "price":record['price'],
+                            "deadline": record['date_time'].isoformat(),
+                            "limit":record['maximum_participants'],
+                            "sales":record['participants']}
                 return_list.append(recipe)
                 i = i +1
 
