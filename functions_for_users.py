@@ -90,7 +90,7 @@ def check_user(cursor, external_type,external_id) :
 
     try :
         print("회원가입 확인중")
-        query = '''SELECT  email, nickname, profile_img, profile_desc, created_at 
+        query = '''SELECT  email, nickname, profile_img, profile_desc, external_type ,created_at as createdAt, updated_at as updatedAt
                     FROM user
                     where external_type = %s
                     and external_id = %s;'''
@@ -111,7 +111,8 @@ def check_user(cursor, external_type,external_id) :
             ### 문자열로 바꿔준다.
             i = 0
             for record in record_list:
-                record_list[i]['created_at'] = record['created_at'].isoformat()
+                record_list[i]['createdAt'] = record['createdAt'].isoformat()
+                record_list[i]['updatedAt'] = record['updatedAt'].isoformat()
                 i = i + 1
             return {'status' : 200, 'message' : "회원입니다.","userInfo":record_list[0]}
 
@@ -153,7 +154,7 @@ def get_naver_token (code, state) :
 
 def get_naver_profile(access_token) :
 
-    header = {"Authorization" : "Bearer " + access_token}
+    header = {"Authorization" :  access_token}
 
     profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
 

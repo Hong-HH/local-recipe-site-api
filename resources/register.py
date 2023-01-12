@@ -33,8 +33,8 @@ class UserRegisterResource(Resource) :
             print("회원가입 절차 시작")
 
             # 엑세스 토큰 확인
-            access_token =  request.headers.get('Token') 
-            refresh_token = request.cookies.get('refresh_token')
+            access_token =  request.headers.get('Authorization') 
+            refresh_token = request.headers.get('Rft')
 
 
             # 엑세스 토큰 유효성 검사 겸 유저 정보 겟
@@ -53,7 +53,7 @@ class UserRegisterResource(Resource) :
                     profile_info = profile_result["profile_info"]
                 else :
                     print("access token 발급에 문제 발생")
-                    return {"status" : 500 , 'message' : "access token 발급에 문제 발생"}
+                    return {"status" : 500 , 'message' : "access token 발급에 문제 발생"} , 500
 
             try : 
                 # db 연결
@@ -65,7 +65,7 @@ class UserRegisterResource(Resource) :
 
                 if check_result["status"] == 200 :
                     # db에 유저가 있음 --> 회원가입함 리턴
-                    return {'status' : 400 , 'message' : "registered"} 
+                    return {'status' : 400 , 'message' : "registered"}  , 400
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 
                     if "access_token" in data :
@@ -89,7 +89,7 @@ class UserRegisterResource(Resource) :
                             # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
                         except Error as e :
                             print('Error while connecting to MySQL', e)
-                            return {'status' : 500, 'message' : str(e)} 
+                            return {'status' : 500, 'message' : str(e)} , 500
 
                         # 회원가입 결과 보내주기.
                         print("회원가입 성공")
@@ -99,36 +99,16 @@ class UserRegisterResource(Resource) :
 
                         # db에 유저가 있을시 회원가입 결과 리턴
                         if check_result["status"] == 200 :
-                            return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} 
+                            return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} , 200
 
                         else :
-                            return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} 
+                            return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} , 500
 
 
-                    # else :
-                    #     # data에 access_token 이 없다면 정보를 수정할 수 있게
-                    #     # external user info 반환
-
-                    #     userInfo = {"email":profile_info["email"] , "nickname": profile_info["name"], "profile_img": profile_info["profile_image"] }
-                        
-                    #     resp = Response(
-                    #     response=json.dumps({'status' : 200 , 
-                    #                         'message' : "success", 
-                    #                         "userInfo": userInfo, 
-                    #                         "access_token": access_token}),
-                    #             status=200,
-                    #             mimetype="application/json"
-                    #             )
-
-                    #     # 헤더에 access 토큰 이 아니라 바디
-                    #     # resp.headers['access_Token'] = access_token
-                    #     # 보내줄때 쿠키에 refresh 토큰
-                    #     resp.set_cookie('refresh_token', refresh_token )
-                    #     return resp
 
             except Error as e:
                 print('Error', e)
-                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
+                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} ,500
 
             # finally는 필수는 아니다.
             finally :
@@ -142,9 +122,13 @@ class UserRegisterResource(Resource) :
             
         
         # 구글로 회원가입을 하였을 때
-        elif  AuthType == "google" :
-            id_token =  request.headers.get('Token') 
+        elif  AuthType == "google" :            
+            id_token =  request.headers.get('Authorization') 
             print(id_token)
+            split_text = id_token.split(' ')
+            token = split_text[-1]
+
+            print(token)
 
             # 바디에서 수정한 정보들 받기 
             data = request.get_json()
@@ -160,7 +144,7 @@ class UserRegisterResource(Resource) :
                 print("Invalid token")
 
                 # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
-                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
+                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}, 500
                 
 
 
@@ -176,7 +160,7 @@ class UserRegisterResource(Resource) :
                 # 3-3. db에 유저가 있을시 로그인 결과 리턴
                 if check_result["status"] == 200 :
                     # 이미 회원가입 된 유저입니다 리턴
-                    return {'status' : 400 , 'message' : "registered"} 
+                    return {'status' : 400 , 'message' : "registered"} , 400
 
 
                 else :    
@@ -201,7 +185,7 @@ class UserRegisterResource(Resource) :
                             # 위의 코드를 실행하다가, 문제가 생기면, except를 실행하라는 뜻.
                         except Error as e :
                             print('Error while connecting to MySQL', e)
-                            return {'status' : 500, 'message' : str(e)} 
+                            return {'status' : 500, 'message' : str(e)}  , 500
 
                         # 회원가입 결과 보내주기.
                         print("회원가입 성공")
@@ -211,18 +195,11 @@ class UserRegisterResource(Resource) :
 
                         # db에 유저가 있을시로그인 결과 리턴
                         if check_result["status"] == 200 :
-                            return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} 
+                            return {'status' : 200 , 'message' : "register success", "userInfo": check_result["userInfo"]} , 200
 
                         else :
-                            return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."} 
+                            return {'status' : 500 , 'message' : "회원정보를 db에 등록하는데 실패하였습니다."}  , 500
 
-
-                    # else : 
-                    #     # 이 경우 회원가입을 진행하기 전 정보를 수정할 수 있게 
-                    #     # external site에서 가져온 회원정보 보내주기
-                    #     userInfo = {"email":id_info["email"] , "nickname": id_info["name"], "profile_img":id_info["picture"] }
-            
-                    #     return {'status' : 200 , 'message' : "success", "userInfo": userInfo}
 
 
             except Error as e:
@@ -238,28 +215,3 @@ class UserRegisterResource(Resource) :
                 else :
                     print('MySQL connection failed connect')
 
-
-
-# 3-2. db에 유저가 없을시 회원가입 결과 리턴
-# if check_result["status"] == 200 :
-#     if "code" in data :
-#         resp = Response(
-#                 response=json.dumps({
-#                                         "status" : 200,
-#                                         "message": "success" ,
-#                                         "userInfo" : check_result["userInfo"],
-#                                         "token" : access_token
-#                                     }),
-#                         status=200,
-#                         mimetype="application/json"
-#                         )
-
-#         # 헤더에 access 토큰 이 아니라 바디
-#         # resp.headers['access_Token'] = access_token
-#         # 보내줄때 쿠키에 refresh 토큰
-#         resp.set_cookie('refresh_token', refresh_token )
-#         return resp
-#     else :
-#         return { "status" : 200, "message": "success" , "userInfo" : check_result["userInfo"], "token" : access_token }
-# else :
-#     return {'status' : 500 , 'message' : '회원정보를 찾을 수 없습니다.'} 

@@ -144,7 +144,7 @@ def before_request() :
                 pass
             else :
                 # 토큰이 유효하지 않음으로 재발급 후 재검사
-                refresh_token = request.cookies.get('refresh_token')
+                refresh_token = request.headers.get('Rft')
                 access_token = refresh_naver_token(refresh_token)
                 profile_result = get_naver_profile(access_token)
 

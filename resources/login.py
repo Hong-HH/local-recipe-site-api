@@ -53,7 +53,7 @@ class UserLoginResource(Resource) :
                 else :
                     # 2-1. access_token 있으면 변수에 저장
                     access_token =  request.headers.get('Authorization') 
-                    refresh_token = request.cookies.get('refresh_token')
+                    refresh_token = request.headers.get('Rft')
                     
 
                     
@@ -79,24 +79,29 @@ class UserLoginResource(Resource) :
 
                 if check_result["status"] == 200 :
                     # db에 유저가 있음 --> 로그인 결과 리턴
-                    return {'status' : 200 , 'message' : "success", 'userInfo': [check_result["userInfo"]["nickname"], check_result["userInfo"]["email"]]} , 200
+                    return {'status' : 200 , 'message' : "success", 'userInfo': check_result["userInfo"]} , 200
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
 
-                    userInfo = [profile_info["name"], profile_info["email"]]
+                    userInfo = { "nickname" : profile_info["name"], "email" : profile_info["email"] , "external_type": AuthType }
 
                     resp = Response(
-                        response=json.dumps({'status' : 200 , 
+                        response=json.dumps({"isRegistered": False,
+                                            'status' : 202 , 
                                             'message' : "go_register", 
                                             "userInfo": userInfo, 
-                                            "access_token": access_token}),
-                                status=200,
+                                            "token": {
+                                                        "act" : access_token,
+                                                        "rft" : refresh_token,
+                                                        } 
+                                            }),
+                                status=202,
                                 mimetype="application/json"
                                 )
 
                     # 보내줄때 쿠키에 refresh 토큰
                     resp.set_cookie('refresh_token', refresh_token )
-                    return resp
+                    return resp, 202
     
                 else :
                     return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} , 500
@@ -131,8 +136,6 @@ class UserLoginResource(Resource) :
             #  공식문서 : https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
             try:
                 # Specify the CLIENT_ID of the app that accesses the backend:
-                split_text = token.split(' ')
-                token = split_text[-1]
                 id_info = id_token_module.verify_oauth2_token(token, google_requests.Request(), Config.GOOGLE_LOGIN_CLIENT_ID)
 
             except ValueError:
@@ -143,7 +146,7 @@ class UserLoginResource(Resource) :
 
 
                 # 토큰이 유효하지 않을 때 리턴값으로 분기문 설정 
-                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}
+                return {'status' : 500, 'message' : "id 토큰 유효성 검사에서 문제 생김"}, 500
 
 
             # 3-1. DB에 연결
@@ -158,18 +161,18 @@ class UserLoginResource(Resource) :
                 # 3-3. db에 유저가 있을시 로그인 결과 리턴
                 if check_result["status"] == 200 :
                     
-                    return {'status' : 200 , 'message' : "success", "userInfo": [check_result["userInfo"]["nickname"], check_result["userInfo"]["email"]]} 
+                    return {'status' : 200 , 'message' : "success", "userInfo": check_result["userInfo"] } , 200
 
                 else :    
                     # 4-1. 회원가입이 되어있지 않다면 회원가입이 필요하다는 메세지를 리턴해준다.
-                    userInfo = [id_info["name"], id_info["email"] ]
-                    return {'status' : 202 , 'message' : "go_register", "userInfo" : userInfo } , 202
+                    userInfo = { "nickname" : id_info["name"], "email" : id_info["email"] , "external_type": AuthType }
+                    return { "isRegistered": False, 'status' : 202 , 'message' : "go_register", "userInfo" : userInfo } , 202
 
 
             except Error as e:
                 print('Error', e)
 
-                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} 
+                return {'status' : 500 , 'message' : 'db연결에 실패했습니다.'} , 500
 
             # finally는 필수는 아니다.
             finally :

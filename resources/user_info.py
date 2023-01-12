@@ -42,7 +42,7 @@ class UserRecipeResource(Resource) :
             else :
                 # 나중에 통합한 토큰 재발급 함수 추가
                 if AuthType == "naver" :
-                    refresh_token = request.cookies.get('refresh_token')
+                    refresh_token = request.headers.get('Rft')
                     token = get_refresh_token(AuthType, refresh_token )
                     #  다시한번 유저 인증 과정 거쳐서 유저 id 겟 시도
                     id_result = get_external_id(AuthType, token)
@@ -162,7 +162,7 @@ class UserLikeRecipeResource(Resource) :
             else :
                 # 나중에 통합한 토큰 재발급 함수 추가
                 if AuthType == "naver" :
-                    refresh_token = request.cookies.get('refresh_token')
+                    refresh_token = request.headers.get('Rft')
                     token = get_refresh_token(AuthType, refresh_token )
                     #  다시한번 유저 인증 과정 거쳐서 유저 id 겟 시도
                     id_result = get_external_id(AuthType, token)
