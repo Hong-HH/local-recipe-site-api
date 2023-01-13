@@ -136,8 +136,9 @@ def before_request() :
         print("토큰 유효성 검사 시작")
         AuthType = request.headers.get("AuthType")
         token =  request.headers.get('Authorization') 
+        data = request.get_json()
 
-        if AuthType == "naver" :
+        if AuthType == "naver" and "code" not in data:
             profile_result = get_naver_profile(access_token)
 
             if profile_result["result_code"] == "00" :

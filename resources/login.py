@@ -96,7 +96,7 @@ class UserLoginResource(Resource) :
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
 
-                    userInfo = { "nickname" : profile_info["name"], "email" : profile_info["email"] , "external_type": AuthType }
+                    userInfo = { "nickname" : profile_info["nickname"], "email" : profile_info["email"] , "external_type": AuthType }
 
                     resp = Response(
                         response=json.dumps({"isRegistered": False,
