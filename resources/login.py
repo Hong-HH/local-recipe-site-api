@@ -91,7 +91,7 @@ class UserLoginResource(Resource) :
 
                     # 보내줄때 쿠키에 refresh 토큰
                     resp.set_cookie('refresh_token', refresh_token )
-                    return resp, 200
+                    return resp
                     
                 elif check_result["status"] == 400 :
                     # db에 유저가 없음 --> 정보 쥐어주고 회원가입으로 보내버리기
@@ -114,7 +114,7 @@ class UserLoginResource(Resource) :
 
                     # 보내줄때 쿠키에 refresh 토큰
                     resp.set_cookie('refresh_token', refresh_token )
-                    return resp, 202
+                    return resp
     
                 else :
                     return {'status' : 500 , 'message' : 'check_user() 에서 알 수 없는 에러 발생'} , 500

@@ -117,7 +117,7 @@ class UserRegisterResource(Resource) :
 
                         # 보내줄때 쿠키에 refresh 토큰
                         resp.set_cookie('refresh_token', refresh_token )
-                        return resp, 200
+                        return resp
 
 
                     else :
