@@ -156,7 +156,7 @@ def get_naver_token (code, state) :
 
 def get_naver_profile(access_token) :
 
-    header = {"Authorization" : "Bearer " + access_token}
+    header = {"Authorization" :  access_token}
 
     profile_result = requests.get("https://openapi.naver.com/v1/nid/me", headers = header).json()
 
